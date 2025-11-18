@@ -54,6 +54,7 @@ module.exports = {
 
     'vue/max-attributes-per-line': 'off',
 
+  'vue/no-multiple-template-root': 'off' ,
 
     'vue/no-v-html': 'off',
 

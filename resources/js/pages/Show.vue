@@ -14,10 +14,9 @@
 </template>
 
 <script lang="ts" setup>
-import AuthSecondaryNavLayout from '../../../js/layouts/AuthSecondaryNavLayout.vue';
-import AuthMainNavLayout from '../../../js/layouts/AuthMainNavLayout.vue';
-import ApplicantDashboard from '@/pages/auth-applicant/ApplicantDashboard.vue';
-import FooterLayout from '../../../js/layouts/FooterLayout.vue';
+import AuthSecondaryNavLayout from '../layouts/AuthSecondaryNavLayout.vue';
+import AuthMainNavLayout from '../layouts/AuthMainNavLayout.vue';
+import FooterLayout from '../layouts/FooterLayout.vue';
 </script>
 
 

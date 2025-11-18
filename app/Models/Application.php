@@ -14,6 +14,7 @@ class Application extends Model
     protected $fillable = [
         // Personal Information
         'emailAddress',
+        'verifyEmailAddress',
         'lastName',
         'firstName',
         'middleName',

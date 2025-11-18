@@ -23520,11 +23520,6 @@ namespace Barryvdh\Debugbar\Facades {
 
 namespace Laravel\Socialite\Facades {
     /**
-     * @method array getScopes()
-     * @method \Laravel\Socialite\Contracts\Provider scopes(array|string $scopes)
-     * @method \Laravel\Socialite\Contracts\Provider setScopes(array|string $scopes)
-     * @method \Laravel\Socialite\Contracts\Provider redirectUrl(string $url)
-     * @see \Laravel\Socialite\SocialiteManager
      */
     class Socialite extends \Illuminate\Support\Manager {
         /**

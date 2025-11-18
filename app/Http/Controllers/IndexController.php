@@ -12,16 +12,7 @@ class IndexController extends Controller
      */
     public function index()
     {
-        //  dd(Application::all());
-        return inertia(
-            'Application/Index',
-            [
-                'applications' => Application::all(),
-                'message' => 'doodoo',
-
-            ]
-
-        );
+         return inertia('Index');
     }
 
     /**
@@ -45,14 +36,6 @@ class IndexController extends Controller
      */
     public function show(Application $application)
     {
-        return inertia(
-            'Application/Show',
-            [
-            
-                'application' => $application
-            ]
-
-        );
     }
 
     /**

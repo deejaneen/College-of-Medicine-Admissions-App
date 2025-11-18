@@ -4,7 +4,7 @@ import VueSmoothScroll from 'vue3-smooth-scroll';
 import { ZiggyVue } from 'ziggy-js';
 import '../css/app.css';
 import { initializeTheme } from './composables/useAppearance';
-import Index from '../js/pages/Application/Index.vue';
+import Index from './pages/Index.vue';
 
 // Add Google Fonts programmatically
 const addGoogleFonts = () => {
@@ -39,10 +39,8 @@ createInertiaApp({
         const pages = import.meta.glob<DefineComponent>('./Pages/**/*.vue', { eager: true });
         const component = await pages[`./Pages/${name}.vue`];
         const page = component?.default || component;
-
-        if (page) {
-            page.layout = page.layout || Index;
-        }
+        
+      
 
         return page;
     },
@@ -59,6 +57,3 @@ createInertiaApp({
 });
 
 initializeTheme();
-
-Index.unmount()
-createApp(Index).mount('#app')

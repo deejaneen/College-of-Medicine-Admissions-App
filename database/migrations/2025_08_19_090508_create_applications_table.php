@@ -18,6 +18,7 @@ return new class extends Migration
 
             // Personal Information
             $table->string('emailAddress');
+            $table->string('verifyEmailAddress');
             $table->string('lastName');
             $table->string('firstName');
             $table->string('middleName');
