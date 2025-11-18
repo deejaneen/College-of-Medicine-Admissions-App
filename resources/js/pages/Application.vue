@@ -5,7 +5,7 @@
             <AuthMainNavLayout/>
         </header>
         <main class="main-container">
-            <ApplicantForm :userEmail="email ?? ''" />
+            <ApplicantForm :userEmail="props.userEmail ?? ''" />
         </main>
         <footer>
             <FooterLayout/>
@@ -18,19 +18,12 @@ import AuthSecondaryNavLayout from '../layouts/AuthSecondaryNavLayout.vue';
 import AuthMainNavLayout from '../layouts/AuthMainNavLayout.vue';
 import FooterLayout from '../layouts/FooterLayout.vue';
 import ApplicantForm from '../pages/ApplicantForm.vue';
-</script>
 
-
-<script lang="ts">
-export default {
-    props: {
-        email: String,
-    },
-};
+const props = defineProps<{ userEmail: string }>();
 </script>
 
 <style scoped>
 .main-container{
-    background: var(--color-light-bg);
+  background: var(--color-light-bg);
 }
 </style>

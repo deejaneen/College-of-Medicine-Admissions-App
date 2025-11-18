@@ -12,7 +12,7 @@ class Application extends Model
     protected $table = 'applications';
 
     protected $fillable = [
-        // Personal Information
+       // Step 1: Personal Information
         'emailAddress',
         'verifyEmailAddress',
         'lastName',
@@ -29,28 +29,18 @@ class Application extends Model
         'civilStatus',
         'sex',
         'religion',
-
-        // Religious Group
-        'memberOfReligiousGroup',
-        'isMemberOfReligiousGroup',
-
-        // Physical Disability
+        'indigenousGroup',
+        'indigenousGroupSpecify',
         'physicalDisability',
-        'hasPhysicalDisability',
+        'physicalDisabilitySpecify',
 
-        // Educational Background - Bachelors
+        // Step 2: Educational Background - Bachelors
         'bachelorsDegree',
         'nameOfSchoolBachelorsDegree',
         'gwaforBachelorsDegree',
         'trascriptOfRecords',
 
-        // Educational Background - Graduate Studies
-        'graduateStudies',
-        'graduateStudiesSchool',
-        'dateOrPossibleDateOfGrad',
-        'trascriptOfRecordsGraduate',
-
-        // Family Information
+        // Step 3: Family Information
         'fatherLastName',
         'fatherMiddleName',
         'fatherFirstName',
@@ -59,23 +49,17 @@ class Application extends Model
         'motherMiddleName',
         'motherFirstName',
         'motherOccupation',
-        'guardianLastName',
-        'guardianMiddleName',
-        'guardianFirstName',
-        'guardianOccupation',
         'combinedAnnualIncomeOfFamily',
+        'communityHealthVolunteer',
+        'communityHealthOrganization',
 
-        // NMAT Information
+        // Step 4: NMAT Information
         'nmatNationalMedicalAdmissionTestScore',
         'nmatNationalMedicalAdmissionTestCertification',
         'dateOfNmatNationalMedicalAdmissionTestExamination',
 
-        // Community Involvement
-        'parentCommunityHealthVolunteer',
-        'isParentCommunityHealthVolunteer',
-
-        // Essay/Reason
-        'whyChooseSouthernLuzonStateUniversity'
+        // Step 5: Essay/Reason
+        'whyChooseSouthernLuzonStateUniversity',
     ];
     protected $hidden = [
         // Add any attributes you want to hide from JSON/array output

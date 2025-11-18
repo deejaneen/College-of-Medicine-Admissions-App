@@ -31,9 +31,10 @@ class ApplicationController extends Controller
 
         return redirect()->route('login')->with('success', "Logged out successfully!");
     }
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $rules = [
+            // Step 1: Personal Information
             'emailAddress' => 'required|email',
             'verifyEmailAddress' => 'required|same:emailAddress',
             'lastName' => 'required|string|max:255',
@@ -50,18 +51,18 @@ class ApplicationController extends Controller
             'civilStatus' => 'required|string|max:50',
             'sex' => 'required|string|max:20',
             'religion' => 'required|string|max:100',
-            'memberOfReligiousGroup' => 'required|in:yes,no',
-            'isMemberOfReligiousGroup' => 'nullable|string|max:255',
+            'indigenousGroup' => 'required|in:yes,no',
+            'indigenousGroupSpecify' => 'nullable|required_if:indigenousGroup,yes|string|max:255',
             'physicalDisability' => 'required|in:yes,no',
-            'hasPhysicalDisability' => 'nullable|string|max:255',
+            'physicalDisabilitySpecify' => 'nullable|required_if:physicalDisability,yes|string|max:255',
+
+            // Step 2: Educational Background - Bachelors
             'bachelorsDegree' => 'required|string|max:255',
             'nameOfSchoolBachelorsDegree' => 'required|string|max:255',
             'gwaforBachelorsDegree' => 'required|numeric',
             'trascriptOfRecords' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'graduateStudies' => 'nullable|string|max:255',
-            'graduateStudiesSchool' => 'nullable|string|max:255',
-            'dateOrPossibleDateOfGrad' => 'nullable|string|max:100',
-            'trascriptOfRecordsGraduate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+
+            // Step 3: Family Information
             'fatherLastName' => 'required|string|max:255',
             'fatherMiddleName' => 'nullable|string|max:255',
             'fatherFirstName' => 'required|string|max:255',
@@ -70,27 +71,24 @@ class ApplicationController extends Controller
             'motherMiddleName' => 'nullable|string|max:255',
             'motherFirstName' => 'required|string|max:255',
             'motherOccupation' => 'nullable|string|max:255',
-            'guardianLastName' => 'nullable|string|max:255',
-            'guardianMiddleName' => 'nullable|string|max:255',
-            'guardianFirstName' => 'nullable|string|max:255',
-            'guardianOccupation' => 'nullable|string|max:255',
             'combinedAnnualIncomeOfFamily' => 'required|string',
+            'communityHealthVolunteer' => 'required|in:yes,no',
+            'communityHealthOrganization' => 'nullable|required_if:communityHealthVolunteer,yes|string|max:255',
+
+            // Step 4: NMAT Information
             'nmatNationalMedicalAdmissionTestScore' => 'nullable|integer',
             'nmatNationalMedicalAdmissionTestCertification' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'dateOfNmatNationalMedicalAdmissionTestExamination' => 'nullable|date',
-            'parentCommunityHealthVolunteer' => 'required|in:yes,no',
-            'isParentCommunityHealthVolunteer' => 'nullable|string|max:255',
+
+            // Step 5: Essay/Reason
             'whyChooseSouthernLuzonStateUniversity' => 'required|string|min:50',
         ];
 
         $validated = $request->validate($rules);
 
+        // File upload handling
         if ($request->hasFile('trascriptOfRecords')) {
             $validated['trascriptOfRecords'] = $request->file('trascriptOfRecords')->store('applications/tor', 'public');
-        }
-
-        if ($request->hasFile('trascriptOfRecordsGraduate')) {
-            $validated['trascriptOfRecordsGraduate'] = $request->file('trascriptOfRecordsGraduate')->store('applications/graduate_tor', 'public');
         }
 
         if ($request->hasFile('nmatNationalMedicalAdmissionTestCertification')) {
@@ -103,12 +101,12 @@ class ApplicationController extends Controller
     }
 
     public function create()
-{
-    // If user is logged in via Google or normal login
-    $userEmail = Auth::check() ? Auth::user()->email : '';
+    {
+        // If user is logged in via Google or normal login
+       $userEmail = Auth::check() ? Auth::user()->email : null;
 
-    return Inertia::render('Application', [
-        'userEmail' => $userEmail, // <-- pass email to Vue
-    ]);
-}
+        return Inertia::render('Application', [
+            'userEmail' => $userEmail,
+        ]);
+    }
 }
