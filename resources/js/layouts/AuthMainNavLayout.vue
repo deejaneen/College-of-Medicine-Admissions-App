@@ -15,21 +15,21 @@
           <ul class="auth-navbar__nav" :class="{ active: isMenuOpen }">
 
             <li class="auth-navbar__item-home">
-              <Link :href="route('login')">
+              <Link :href="route('dashboard')">
                 <span class="underline-animation">HOME</span>
               </Link>
             </li>
 
             <li class="auth-navbar__item-application-form">
-              <Link :href="route('application')">
+              <Link :href="route('application.form')">
                 <span class="underline-animation">APPLICATION FORM</span>
               </Link>
             </li>
 
             <li class="navbar__button-log-out">
-              <Link href="" class="center underline-animation primary">
+              <button @click="logout" class="center underline-animation primary">
                 LOGOUT
-              </Link>
+              </button>
             </li>
 
           </ul>
@@ -55,12 +55,17 @@
 <script lang="ts" setup>
 import { Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { Inertia } from '@inertiajs/inertia';
 
 const isMenuOpen = ref(false);
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
+
+const logout = () => {
+  Inertia.post(route('logout'));
+}
 </script>
 
 <script lang="ts">
@@ -144,6 +149,10 @@ export default {
 
 .auth-navbar__nav li:last-child {
   padding-right: 0;
+}
+
+.navbar__button-log-out button{
+  cursor: pointer;
 }
 
 @media (max-width: 640px) {

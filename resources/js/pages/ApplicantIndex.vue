@@ -5,7 +5,7 @@
             <AuthMainNavLayout/>
         </header>
         <main class="main-container">
-            <ApplicantForm :userEmail="props.userEmail ?? ''" />
+            <ApplicantDashboard :activeUser="props.activeUser ?? ''" />
         </main>
         <footer>
             <FooterLayout/>
@@ -17,9 +17,9 @@
 import AuthSecondaryNavLayout from '../layouts/AuthSecondaryNavLayout.vue';
 import AuthMainNavLayout from '../layouts/AuthMainNavLayout.vue';
 import FooterLayout from '../layouts/FooterLayout.vue';
-import ApplicantForm from '../pages/ApplicantForm.vue';
+import ApplicantDashboard from './auth-applicant/ApplicantDashboard.vue';
 
-const props = defineProps<{ userEmail: string }>();
+const props = defineProps<{ activeUser: string }>();
 </script>
 
 <style scoped>

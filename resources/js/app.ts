@@ -4,7 +4,17 @@ import VueSmoothScroll from 'vue3-smooth-scroll';
 import { ZiggyVue } from 'ziggy-js';
 import '../css/app.css';
 import { initializeTheme } from './composables/useAppearance';
-import Index from './pages/Index.vue';
+
+
+// Add this snippet at the top-level, before creating the app
+window.addEventListener('pageshow', (event) => {
+  const navEntries = window.performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+
+  if (event.persisted || (navEntries[0] && navEntries[0].type === "back_forward")) {
+    window.location.reload();
+  }
+});
+
 
 // Add Google Fonts programmatically
 const addGoogleFonts = () => {

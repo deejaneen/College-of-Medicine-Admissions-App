@@ -12,10 +12,10 @@
           <div class="card__sign-in">
               <h2 class="card__heading">SIGN-IN TO APPLY</h2>
               <p class="card__sign-in__card-description">Welcome to the CAM Admissions Portal. This functions like a Google Form. Please continue with Google when you are ready. </p>
-              <button class="card__signup">
-                <img src="../../../storage/app/public/images/icons8-google-logo.svg" alt="Google Logo for Sign in with Google button">
-                <a :href="route('login.google')"> Sign in with Google</a>
-              </button>
+              <a :href="route('login.google')" class="card__signup">
+                <img src="../../../storage/app/public/images/icons8-google-logo.svg" alt="Google Logo">
+                Sign in with Google
+              </a>
           </div>
       </div>
     </div>

@@ -28,9 +28,13 @@
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {
+        "@ag-grid-community/styles": "^32.3.9",
+        "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/vue3": "^2.1.2",
         "@tailwindcss/vite": "^4.1.11",
         "@vueuse/core": "^12.8.2",
+        "ag-grid-community": "^34.3.1",
+        "ag-grid-vue3": "^34.3.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
@@ -46,7 +50,10 @@
         "vue": "^3.5.24",
         "vue-meta": "^2.4.0",
         "vue-router": "^4.6.3",
+        "vue-tables-3": "^2.0.1-beta05",
+        "vue3-easy-data-table": "^1.5.47",
         "vue3-smooth-scroll": "^0.8.1",
+        "vuetify": "^3.11.0-beta.1",
         "ziggy-js": "^2.4.2"
     },
     "optionalDependencies": {

@@ -1,23 +1,28 @@
 <template>
     <div class="dashboard-container">
         <div class="dashboard__banner">
-            <h1>
+            <div class="dashboard__title">
                 Dashboard
-            </h1>
+            </div>
            
         </div>
         <div class="dashboard__card">
             <p>
-                Hello name, thank you for applying to SLSU College of Allied Medicine. 
+                Hello {{props.activeUser}}, welcome to SLSU College of Medicine Admissions Portal. 
             </p>
-            <p class="dashboard__card-status">
-                Your application is being processed. You will receive an email regarding the result once your application has been reviewed.
-            </p>
+            <!-- <p class="dashboard__card-status">
+                {{ statusMessage }}
+            </p> -->
         </div>
     </div>
 </template>
 
 <script lang="ts" setup>
+// Props
+interface Props {
+  activeUser: string;
+}
+const props = defineProps<Props>();
 </script>
 
 <script lang="ts">
@@ -29,28 +34,36 @@
 <style scoped>
 
 .submission-status {
-    font-size: var(--font-p);
+    font-size: var(--font-size-h5);
 }
 /* Applicant Auth Dashboard */
 .dashboard-container {
-    background: var(--background);
-    padding: 6rem 12.8rem;
+    background: var(--color-background);
+    padding: var(--space-8);
     height: auto;
+    border-radius: var(--radius-l);
+    box-shadow: var(--elevation-2);
+    margin: 0 auto;
+    max-width: 90rem;
+    border-top: .4rem solid var(--color-primary);
 }
 .dashboard__banner{
  padding-bottom: 2rem;
 }
+.dashboard__title{
+    font-size: var(--font-size-h4);
+    color: var(--color-primary);
+}
 .dashboard__card {
-    border-radius: 2rem;
+     border-radius: var(--radius-l);
     background: var(--background-gradient-cards);
-    padding: 6rem;
     gap: 2rem;
     display: flex;
     align-items: left;
     flex-direction: column;
 }
 .dashboard__card p {
-    font-size: var(--font-h6);
+    font-size: var(--font-size-p);
 }
 
 @media (max-width: 640px) {
@@ -63,10 +76,10 @@
         font-size: 1.6rem;
     }
     .dashboard__card {
-        padding: 2rem;
+        padding: var(--space-5);
     }
     .dashboard-container{
-        padding: 2rem;
+        padding: var(--space-5);
     }
 }
 

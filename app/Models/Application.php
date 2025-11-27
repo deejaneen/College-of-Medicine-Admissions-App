@@ -60,6 +60,12 @@ class Application extends Model
 
         // Step 5: Essay/Reason
         'whyChooseSouthernLuzonStateUniversity',
+
+        //Application status
+        'applicationStatus',
+    ];
+     protected $attributes = [
+        'applicationStatus' => 'For Review'
     ];
     protected $hidden = [
         // Add any attributes you want to hide from JSON/array output

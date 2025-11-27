@@ -85,6 +85,7 @@ return new class extends Migration
 
             // Essay/Reason
             $table->text('whyChooseSouthernLuzonStateUniversity');
+            $table->string('applicationStatus')->default('For Review');
         });
     }
 

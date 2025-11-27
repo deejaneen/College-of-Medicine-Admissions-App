@@ -14,14 +14,18 @@ class ApplicationController extends Controller
     {
         $user = Auth::user();
 
-        return inertia('Application', [
-            'activeEmail' => $user ? $user->email : null,
+        return inertia('ApplicantIndex', [
+            'activeUser' => $user ? $user->name : null,
         ]);
     }
 
-    public function show(Application $application)
+    public function form(Application $application)
     {
-        return inertia('Show');
+        $user = Auth::user();
+
+        return inertia('Application', [
+            'activeEmail' => $user ? $user->email : null,
+        ]);
     }
     public function destroy(Request $request)
     {
@@ -35,11 +39,11 @@ class ApplicationController extends Controller
     {
         $rules = [
             // Step 1: Personal Information
-            'emailAddress' => 'required|email',
-            'verifyEmailAddress' => 'required|same:emailAddress',
-            'lastName' => 'required|string|max:255',
             'firstName' => 'required|string|max:255',
             'middleName' => 'nullable|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'emailAddress' => 'required|email',
+            'verifyEmailAddress' => 'required|same:emailAddress',
             'dateOfBirth' => 'required|date',
             'citizenship' => 'required|string|max:255',
             'permanentHomeAddress' => 'required|string',
@@ -56,21 +60,35 @@ class ApplicationController extends Controller
             'physicalDisability' => 'required|in:yes,no',
             'physicalDisabilitySpecify' => 'nullable|required_if:physicalDisability,yes|string|max:255',
 
-            // Step 2: Educational Background - Bachelors
+            // Step 2: Bachelor’s Degree
             'bachelorsDegree' => 'required|string|max:255',
             'nameOfSchoolBachelorsDegree' => 'required|string|max:255',
             'gwaforBachelorsDegree' => 'required|numeric',
-            'trascriptOfRecords' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'bachelorsTranscriptOfRecords' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+
+            // Graduate Studies (Optional)
+            'graduateStudies' => 'nullable|string|max:255',
+            'nameOfSchoolGraduateStudies' => 'nullable|string|max:255',
+            'dateOfGraduation' => 'nullable|date',
+            'graduateStudiesTranscriptOfRecords' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
 
             // Step 3: Family Information
-            'fatherLastName' => 'required|string|max:255',
-            'fatherMiddleName' => 'nullable|string|max:255',
             'fatherFirstName' => 'required|string|max:255',
+            'fatherMiddleName' => 'nullable|string|max:255',
+            'fatherLastName' => 'required|string|max:255',
             'fatherOccupation' => 'nullable|string|max:255',
-            'motherLastName' => 'required|string|max:255',
-            'motherMiddleName' => 'nullable|string|max:255',
+
             'motherFirstName' => 'required|string|max:255',
+            'motherMiddleName' => 'nullable|string|max:255',
+            'motherLastName' => 'required|string|max:255',
             'motherOccupation' => 'nullable|string|max:255',
+
+            // Guardian (optional)
+            'guardianFirstName' => 'nullable|string|max:255',
+            'guardianMiddleName' => 'nullable|string|max:255',
+            'guardianLastName' => 'nullable|string|max:255',
+            'guardianOccupation' => 'nullable|string|max:255',
+
             'combinedAnnualIncomeOfFamily' => 'required|string',
             'communityHealthVolunteer' => 'required|in:yes,no',
             'communityHealthOrganization' => 'nullable|required_if:communityHealthVolunteer,yes|string|max:255',
@@ -80,25 +98,40 @@ class ApplicationController extends Controller
             'nmatNationalMedicalAdmissionTestCertification' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'dateOfNmatNationalMedicalAdmissionTestExamination' => 'nullable|date',
 
-            // Step 5: Essay/Reason
+            // Step 5: Essay
             'whyChooseSouthernLuzonStateUniversity' => 'required|string|min:50',
+
+            'applicationStatus' => 'required|string|max:255',
+
         ];
 
         $validated = $request->validate($rules);
 
-        // File upload handling
-        if ($request->hasFile('trascriptOfRecords')) {
-            $validated['trascriptOfRecords'] = $request->file('trascriptOfRecords')->store('applications/tor', 'public');
+        // File Handling
+        if ($request->hasFile('bachelorsTranscriptOfRecords')) {
+            $validated['bachelorsTranscriptOfRecords'] =
+                $request->file('bachelorsTranscriptOfRecords')->store('applications/tor_bachelors', 'public');
+        }
+
+        if ($request->hasFile('graduateStudiesTranscriptOfRecords')) {
+            $validated['graduateStudiesTranscriptOfRecords'] =
+                $request->file('graduateStudiesTranscriptOfRecords')->store('applications/tor_graduate', 'public');
         }
 
         if ($request->hasFile('nmatNationalMedicalAdmissionTestCertification')) {
-            $validated['nmatNationalMedicalAdmissionTestCertification'] = $request->file('nmatNationalMedicalAdmissionTestCertification')->store('applications/nmat', 'public');
+            $validated['nmatNationalMedicalAdmissionTestCertification'] =
+                $request->file('nmatNationalMedicalAdmissionTestCertification')->store('applications/nmat', 'public');
         }
+
+        $validated['applicationStatus'] = 'For Review';
 
         Application::create($validated);
 
-        return redirect()->route('dashboard')->with('success', 'Application submitted successfully.');
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Application submitted successfully.');
     }
+
 
     public function create()
     {
