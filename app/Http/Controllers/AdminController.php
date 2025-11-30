@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Application;
+use App\Models\SchoolYear;
 
 class AdminController extends Controller
 {
@@ -16,15 +17,15 @@ class AdminController extends Controller
             'stats' => [/* your data */]
         ]);
     }
-
     public function applications(Request $request): Response
     {
-        // Fetch 25 applications per page
-        $applications = Application::paginate(25);
+        $applications = Application::with('schoolYear') // Remove 'user' for now
+            ->orderByDesc('created_at')
+            ->paginate(30);
 
         return Inertia::render('auth-admin/AdminApplications', [
             'title' => 'Applications',
-            'applications' => $applications->items(), // current page rows
+            'applications' => $applications->items(),
             'pagination' => [
                 'current_page' => $applications->currentPage(),
                 'last_page' => $applications->lastPage(),
@@ -34,13 +35,18 @@ class AdminController extends Controller
         ]);
     }
 
+
     public function showApplicationDetails(Application $application): Response
     {
+        $application->load('schoolYear');
+
         return Inertia::render('auth-admin/AdminApplicationDetail', [
             'application' => $application,
             'title' => 'Application Details',
         ]);
     }
+
+
 
     public function users(): Response
     {
@@ -50,11 +56,16 @@ class AdminController extends Controller
         ]);
     }
 
-    public function variables(): Response
+    public function applicationPeriods()
     {
-        return Inertia::render('auth-admin/AdminVariables', [
-            'title' => 'Variables',
-            'variables' => [/* your data */]
+        $schoolYears = SchoolYear::withCount('applications')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $currentActive = SchoolYear::active()->first();
+        
+        return Inertia::render('auth-admin/AdminApplicationPeriods', [
+            'schoolYears' => $schoolYears,
+            'currentActive' => $currentActive,
         ]);
     }
      public function show()
@@ -74,6 +85,18 @@ class AdminController extends Controller
         }
 
         return response()->json(['message' => 'Invalid credentials'], 422);
+    }
+  
+    public function updateStatus(Request $request, Application $application)
+    {
+        $validated = $request->validate([
+            'application_status' => 'required|in:Accepted,Waitlist,Rejected',
+        ]);
+
+        $application->application_status = $validated['application_status'];
+        $application->save();
+
+        return redirect()->back()->with('success', 'Application status updated successfully.');
     }
 
 }

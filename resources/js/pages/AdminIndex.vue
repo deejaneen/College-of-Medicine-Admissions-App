@@ -1,5 +1,4 @@
 <template>
-  <v-app>
     <div class="content-container">
       <aside class="sidebar">
         <AdminNavLayout />
@@ -9,7 +8,6 @@
         <slot />
       </main>
     </div>
-  </v-app>
 </template>
 
 <script lang="ts" setup>

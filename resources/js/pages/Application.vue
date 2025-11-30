@@ -1,11 +1,16 @@
 <template>
     <div>
         <header>
-            <AuthSecondaryNavLayout/>
-            <AuthMainNavLayout/>
+            <AuthSecondaryNavLayout  :deadline="props.schoolYear?.application_deadline"/>
+            <AuthMainNavLayout />
         </header>
         <main class="main-container">
-            <ApplicantForm :userEmail="props.userEmail ?? ''" />
+            <ApplicantForm 
+                :userEmail="props.userEmail" 
+                :isApplicationOpen="props.isApplicationOpen"
+                :schoolYear="props.schoolYear"
+                :hasSubmitted= "props.hasSubmitted"
+            />
         </main>
         <footer>
             <FooterLayout/>
@@ -19,7 +24,16 @@ import AuthMainNavLayout from '../layouts/AuthMainNavLayout.vue';
 import FooterLayout from '../layouts/FooterLayout.vue';
 import ApplicantForm from '../pages/ApplicantForm.vue';
 
-const props = defineProps<{ userEmail: string }>();
+interface Props {
+  userEmail: string;
+  isApplicationOpen: boolean;    
+  schoolYear: {                  
+    school_year: string;
+    application_deadline: string;
+  };
+  hasSubmitted: boolean;
+}
+const props = defineProps<Props>();
 </script>
 
 <style scoped>

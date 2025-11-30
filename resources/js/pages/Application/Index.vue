@@ -1,7 +1,7 @@
 <template>
     <div>
         <header>
-            <AuthSecondaryNavLayout/>
+            <AuthSecondaryNavLayout :deadline="props.deadline"/>
             <AuthMainNavLayout/>
         </header>
         <main>
@@ -18,6 +18,7 @@ import AuthSecondaryNavLayout from '../../../js/layouts/AuthSecondaryNavLayout.v
 import AuthMainNavLayout from '../../../js/layouts/AuthMainNavLayout.vue';
 import ApplicantDashboard from '@/pages/auth-applicant/ApplicantDashboard.vue';
 import FooterLayout from '../../../js/layouts/FooterLayout.vue';
+
 </script>
 
 

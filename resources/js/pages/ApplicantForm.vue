@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { watch, computed } from 'vue';  
+import { router } from '@inertiajs/vue3';
 
 // ref declarations 
 const bachelorsTranscriptInput = ref<HTMLInputElement | null>(null);
@@ -13,13 +13,20 @@ const currentStep = ref(1);
 const totalSteps = 5;
 
 // Router for submission
-const router = useRouter();
 
 // Props
 interface Props {
   userEmail: string;
+  isApplicationOpen: boolean;
+  schoolYear: {
+    school_year: string;
+    application_deadline: string;
+  };
+  hasSubmitted: boolean;
 }
 const props = defineProps<Props>();
+
+console.log('isApplicationOpen:', props.isApplicationOpen)
 
 // TypeScript interface for the full form
 interface ApplicationForm {
@@ -280,31 +287,62 @@ watch(
   }
 );
 
+
 const allowedExtensions = ["jpg", "jpeg", "png", "doc", "docx", "pdf"];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+const MAX_TOTAL_SIZE = 20 * 1024 * 1024; // 50MB total per field
 
 const handleFileUpload = (event: Event, field: keyof ApplicationForm) => {
   const target = event.target as HTMLInputElement;
   if (!target.files) return;
 
   const files = Array.from(target.files);
+  const currentFiles = form[field] as File[];
+  
+  // Check individual file sizes
+  const oversizedFiles = files.filter(file => file.size > MAX_FILE_SIZE);
+  if (oversizedFiles.length > 0) {
+    const oversizedNames = oversizedFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)`).join(', ');
+    alert(`The following files exceed the 10MB limit:\n${oversizedNames}\n\nPlease upload smaller files.`);
+    target.value = '';
+    return;
+  }
 
-  // Filter out files with invalid extensions
+  // Check total size for this field
+  const currentTotalSize = currentFiles.reduce((sum, file) => sum + file.size, 0);
+  const newTotalSize = files.reduce((sum, file) => sum + file.size, 0);
+  const totalAfterUpload = currentTotalSize + newTotalSize;
+  
+  if (totalAfterUpload > MAX_TOTAL_SIZE) {
+    alert(`Total file size for ${fieldDisplayNames[field]} cannot exceed 50MB.\n\nCurrent: ${(currentTotalSize / 1024 / 1024).toFixed(2)} MB\nNew: ${(newTotalSize / 1024 / 1024).toFixed(2)} MB\nTotal: ${(totalAfterUpload / 1024 / 1024).toFixed(2)} MB`);
+    target.value = '';
+    return;
+  }
+
+  // Filter valid extensions
   const validFiles = files.filter(file => {
     const ext = file.name.split('.').pop()?.toLowerCase();
     return ext && allowedExtensions.includes(ext);
   });
 
   if (validFiles.length !== files.length) {
-    alert("Some files were rejected. Allowed formats: jpg, png, doc, docx, pdf.");
+    const rejectedFiles = files.filter(file => {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      return !ext || !allowedExtensions.includes(ext);
+    });
+    alert(`The following files have invalid formats:\n${rejectedFiles.map(f => f.name).join(', ')}\n\nAllowed formats: jpg, jpeg, png, doc, docx, pdf.`);
   }
 
-  form[field] = validFiles as any;
+  // Add new files to existing ones
+  form[field] = [...currentFiles, ...validFiles] as any;
 
-  if (validFiles.length > 0) {
-    delete errors[field];
-  } else {
-    errors[field] = "Please upload a valid file.";
+ const fieldValue = form[field];
+  if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+      delete errors[field];
   }
+  // Clear the input
+  target.value = '';
 };
 
 // Validation per step
@@ -442,9 +480,117 @@ const prevStep = () => {
 };
 
 // Form submission
-const submitForm = () => {
-  if (validateStep(currentStep.value)) {
-    console.log('Form data:', form);
+// const submitForm = async () => {
+//   if (!validateStep(currentStep.value)) {
+//     return;
+//   }
+
+//   try {
+//     // Convert form data to FormData for file uploads
+//     const formData = new FormData();
+    
+//     // Add all form fields to FormData
+//     Object.keys(form).forEach(key => {
+//       const value = form[key as keyof ApplicationForm];
+      
+//       if (fileFields.includes(key as keyof ApplicationForm)) {
+//         // Handle file arrays
+//         const files = value as File[];
+//         files.forEach(file => {
+//           formData.append(`${key}[]`, file);
+//         });
+//       } else {
+//         // Handle regular fields
+//         formData.append(key, value as string);
+//       }
+//     });
+
+//     // Submit using Inertia
+//     router.post('/application/submit', formData, {
+//       forceFormData: true,
+//       onSuccess: () => {
+//         console.log('Application submitted successfully!');
+//         // You can add success notification or redirect here
+//       },
+//       onError: (errors) => {
+//         console.error('Submission errors:', errors);
+//         // Handle backend validation errors
+//         Object.keys(errors).forEach(key => {
+//           errors[key] = errors[key];
+//         });
+//       },
+//       onFinish: () => {
+//         console.log('Submission process completed');
+//       }
+//     });
+    
+//   } catch (error) {
+//     console.error('Error submitting form:', error);
+//   }
+// };
+const submitForm = async () => {
+  console.log('🚀 SUBMIT FORM CALLED - CHECKING VALIDATION');
+  
+  // Validate the current step
+  if (!validateStep(currentStep.value)) {
+    console.log('❌ Validation failed - cannot submit');
+    return;
+  }
+
+  console.log('✅ Validation passed - preparing submission');
+
+  try {
+    // Create FormData
+    const formData = new FormData();
+    
+    // Add all text fields
+    Object.keys(form).forEach(key => {
+      const value = form[key as keyof ApplicationForm];
+      
+      // Skip file fields for now
+      if (fileFields.includes(key as keyof ApplicationForm)) {
+        return;
+      }
+      
+      // Add text fields
+      if (value !== null && value !== undefined && value !== '') {
+        formData.append(key, value as string);
+      }
+    });
+
+    // Add file fields
+    fileFields.forEach(field => {
+      const files = form[field as keyof ApplicationForm] as File[];
+      if (files && files.length > 0) {
+        files.forEach(file => {
+          formData.append(`${field}[]`, file);
+        });
+      }
+    });
+
+    console.log('📤 Submitting form data...');
+    
+    // Submit using Inertia
+    router.post('/application/submit', formData, {
+      forceFormData: true,
+      onSuccess: () => {
+        console.log('✅ Application submitted successfully!');
+        alert('Application submitted successfully!');
+      },
+      onError: (errors) => {
+        console.error('❌ Submission errors:', errors);
+        // Show error messages to user
+        if (errors && typeof errors === 'object') {
+          Object.keys(errors).forEach(key => {
+            alert(`Error in ${key}: ${errors[key]}`);
+          });
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Unexpected error:', error);
+    alert('An unexpected error occurred. Please try again.');
   }
 };
 </script>
@@ -456,10 +602,25 @@ const submitForm = () => {
 </script>
 <template>
   <form class="form-container" @submit.prevent="submitForm">
-    <!-- Step 1 -->
-    <div class="form-header">
-        <h1>Admission for College of medicine</h1>
-        <p>Disclamer: Data gathered will be used as an assessment for the offering of Doctor of Medicine in the Academic Year <!-- {{ academicYear }} -->  20XX-20XX at the Southern Luzon State University (Lucena City, Quezon) and other internal reports & legitimate academic interests.</p>
+    
+    <div v-if="!isApplicationOpen" class="application-closed">
+      <div class="closed-message">
+        <h2>Application Period Closed</h2>
+        <p>The application deadline for {{ schoolYear?.school_year }} for this school year has ended.</p>
+        <p>Please check back for the next application cycle.</p>
+      </div>
+    </div>
+     <div v-else-if="hasSubmitted" class="application-submitted">
+      <div class="card submitted-card">
+        <h2>Application Submitted</h2>
+        <p>Your application for {{ schoolYear.school_year }} has already been submitted.</p>
+        <p>The results of the evaluation will be sent to your email.</p>
+      </div>
+    </div>
+    <div v-else>
+      <div class="form-header">
+        <h1>Admission for College of medicine {{ schoolYear?.school_year }}</h1>
+        <p>Disclamer: Data gathered will be used as an assessment for the offering of Doctor of Medicine in the Academic Year {{ schoolYear?.school_year }} at the Southern Luzon State University (Lucena City, Quezon) and other internal reports & legitimate academic interests.</p>
     </div>
     <div class="form-consent">
       <div class="form-consent__title">DATA PRIVACY CONSENT/AGREEMENT</div>
@@ -814,22 +975,22 @@ const submitForm = () => {
 
         <div class="radio-group">
           <label class="radio-group__label">
-            <input type="radio" value="P 00.00 - P 300 000.00" v-model="form.combinedAnnualIncomeOfFamily" />
+            <input class="radio-button" type="radio" value="P 00.00 - P 300 000.00" v-model="form.combinedAnnualIncomeOfFamily" />
             P 00.00 - P 300 000.00
           </label>
 
           <label class="radio-group__label">
-            <input type="radio" value="P 301 000.00 - P 450 000.00" v-model="form.combinedAnnualIncomeOfFamily" />
+            <input class="radio-button" type="radio" value="P 301 000.00 - P 450 000.00" v-model="form.combinedAnnualIncomeOfFamily" />
             P 301 000.00 - P 450 000.00
           </label>
 
           <label class="radio-group__label">
-            <input type="radio" value="P 451 000.00 - P 700 000.00" v-model="form.combinedAnnualIncomeOfFamily" />
+            <input class="radio-button" type="radio" value="P 451 000.00 - P 700 000.00" v-model="form.combinedAnnualIncomeOfFamily" />
             P 451 000.00 - P 700 000.00
           </label>
 
           <label class="radio-group__label">
-            <input type="radio" value="P 701 000.00 - above" v-model="form.combinedAnnualIncomeOfFamily" />
+            <input class="radio-button" type="radio" value="P 701 000.00 - above" v-model="form.combinedAnnualIncomeOfFamily" />
             P 701 000.00 - above
           </label>
         </div>
@@ -925,8 +1086,12 @@ const submitForm = () => {
     <div class="button-container">
       <button class="navigation-button" type="button" @click="prevStep" :disabled="currentStep === 1">Previous</button>
       <button class="navigation-button" type="button" @click="nextStep" v-if="currentStep < totalSteps">Next</button>
-      <button class="button-submit" type="submit" v-else>Submit</button>
+      <button class="button-submit" type="submit" v-else>
+        Submit
+      </button>
     </div>
+    </div>
+    
   </form>
 </template>
 
@@ -1042,8 +1207,11 @@ button {
 .radio-group__label{
   display: flex;
 }
-.radio-button{
-  margin-right: .8rem;
+.radio-button {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-right: 0.5rem;
+  vertical-align: middle;
 }
 .radio-group-container{
   padding: var(--space-4) var(--space-4) 0 var(--space-4);
@@ -1087,7 +1255,7 @@ button {
 }
 
 .upload-minimal-btn {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: var(--color-light-bg-80);
   color: white;
   border: none;
   border-radius: var(--radius-m);
@@ -1105,6 +1273,7 @@ button {
 .upload-minimal-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  background: var(--color-primary-light)
 }
 
 .minimal-preview {
@@ -1131,7 +1300,7 @@ button {
 .minimal-name {
   flex: 1;
   font-weight: 500;
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-p);
   color: var(--color-foreground);
 }
 
@@ -1180,5 +1349,50 @@ button {
 .file-input-hidden {
   position: absolute;
   left: -9999px;
+}
+/* School Year Info Banner */
+.school-year-info {
+  background: var(--color-bright-green-25);
+  padding: var(--space-4);
+  border-radius: var(--radius-m);
+  margin-bottom: var(--space-6);
+  border-left: 4px solid var(--color-primary);
+  text-align: center;
+}
+
+.school-year-info p {
+  margin: var(--space-2) 0;
+  font-size: var(--font-size-p);
+}
+
+/* Application Closed State */
+.application-submitted,
+.application-closed {
+  text-align: center;
+  padding: var(--space-8);
+  background: var(--color-light-bg);
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submitted-card,
+.closed-message {
+  background: white;
+  padding: var(--space-6);
+  border-radius: var(--radius-l);
+  box-shadow: var(--elevation-2);
+  width: 100%;
+}
+.submitted-card h3{
+  color: var(--color-primary);
+  padding-bottom: var(--space-5);
+}
+
+/* Make email fields look disabled */
+input[disabled] {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
 }
 </style>

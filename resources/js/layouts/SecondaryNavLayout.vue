@@ -1,7 +1,10 @@
 <template>
     <section class="header-nav-container">
         <ul class="header-nav">
-            <li class="submission-deadline">Next Submission Deadline: <b>30 June 2025</b></li>
+            <li class="submission-deadline">
+                <span v-if="deadline">Next Submission Deadline: <b>{{ formatDate(deadline) }}</b></span>
+                <span v-else><b>Applications Closed</b></span>
+            </li>
             <li>
                 <Link href="/" class="slsu-backlink"><span class="underline-animation">SLSU Website</span></Link>
             </li>
@@ -11,6 +14,20 @@
 
 <script lang="ts" setup>
 import { Link } from '@inertiajs/vue3';
+
+interface Props {
+  deadline?: string; 
+}
+
+const { deadline } = defineProps<Props>();
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
 </script>
 
 <script lang="ts">
@@ -18,20 +35,19 @@ import { Link } from '@inertiajs/vue3';
         name: 'HeaderNavLayout',
         metaInfo: {
         title: 'Submission Deadline and SLSU Website Navigation',
-        meta: [
-          { name: 'description', content: 'This is a custom meta description for my awesome page.' },
-          // Add other meta tags as needed
-        ],
       },
     }
 </script>
 
 <style scoped>
+/* Your existing CSS remains the same */
 .header-nav-container {
     background: var(--color-primary);
     color: var(--color-background);
     padding: var(--space-3) var(--space-32);
     font-family: var(--font-sans);
+    position: relative;
+    z-index: 5;
 }
 
 .header-nav {
@@ -49,6 +65,12 @@ import { Link } from '@inertiajs/vue3';
 .submission-deadline b {
     color: var(--color-secondary);
     margin-left: var(--space-2);
+}
+
+/* Style for "Applications Closed" text */
+.submission-deadline span:has(b:only-child) b {
+    margin-left: 0;
+    color: var(--color-secondary); 
 }
 
 .slsu-backlink {
@@ -82,7 +104,7 @@ import { Link } from '@inertiajs/vue3';
     width: 100%;
 }
 
-/* Phone (480px and down) */
+/* Your existing responsive CSS remains the same */
 @media (max-width: 480px) {
     .header-nav-container {
         padding: var(--space-2) var(--space-3);
@@ -103,7 +125,6 @@ import { Link } from '@inertiajs/vue3';
     }
 }
 
-/* Tablet (768px and down) */
 @media (max-width: 768px) {
     .header-nav-container {
         padding: var(--space-2) var(--space-4);
@@ -114,19 +135,15 @@ import { Link } from '@inertiajs/vue3';
     }
 }
 
-/* Small Desktop (1024px and down) */
 @media (max-width: 1024px) {
     .header-nav-container {
         padding: var(--space-3) var(--space-16);
     }
 }
 
-/* Large Desktop (1440px and down) */
 @media (max-width: 1440px) {
     .header-nav-container {
         padding: var(--space-3) var(--space-24);
     }
 }
-
-/* Everything above 1440px uses the default padding (space-32) */
 </style>

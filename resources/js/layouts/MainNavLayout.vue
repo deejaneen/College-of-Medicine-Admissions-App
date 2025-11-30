@@ -38,7 +38,6 @@
 </template>
 
 <script lang="ts" setup>
-import { Link } from '@inertiajs/vue3';
 import '../../css/app.css';
 
 </script>
@@ -60,6 +59,7 @@ export default {
     color: var(--color-foreground);
     background-color: var(--color-background);
     position: relative;
+    z-index: 10;
 }
 
 .navbar-container {

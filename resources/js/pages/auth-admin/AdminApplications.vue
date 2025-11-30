@@ -1,131 +1,177 @@
 <template>
   <AdminIndex>
     <div class="applications-container">
-        <div class="page-title">Applications</div>
-
-            <!-- Search -->
-        <input
-        type="text"
-        v-model="search"
-        placeholder="Search name, email, program, or status"
-        class="search-input"
-        />
-
-            <!-- Table -->
+        <!-- Debug Information -->
+        <div v-if="!hasData" class="debug-info" style="background: #ffebee; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+            <strong>DEBUG: No application data received</strong>
+            <p>Check browser console for details</p>
+        </div>
+        
+        <div class="page-title">Applications for Active Year ({{ activeApplications.length }})</div>
         <table class="table-elevated-minimal">
             <thead>
                 <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
+                    <th>School Year</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-                <tr
-                v-for="app in filteredApplications"
-                :key="app.id"
-                @click="goToApplication(app.id)"
-                >
-                <td>{{ app.lastName }}, {{ app.firstName }} {{ app.middleName }}</td>
-                <td>{{ app.emailAddress }}</td>
-                <td>
-                    <span :class="`status status-${getStatusClass(app.applicationStatus)}`">
-                    {{ app.applicationStatus }}
-                    </span>
-                </td>
+                <tr v-for="app in activeApplications" :key="app.id" @click="goToApplication(app.id)">
+                    <td>{{ app.school_year?.school_year || 'N/A' }}</td>
+                    <td>
+                        {{ app.lastName || app.last_name || '' }}, 
+                        {{ app.firstName || app.first_name || '' }} 
+                        {{ app.middleName || app.middle_name || '' }}
+                    </td>
+                    <td>{{ app.emailAddress || app.email_address || '' }}</td>
+                    <td>
+                        <span :class="`status status-${getStatusClass(app.applicationStatus || app.application_status)}`">
+                            {{ app.applicationStatus || app.application_status || 'For Review' }}
+                        </span>
+                    </td>
+                </tr>
+                <tr v-if="activeApplications.length === 0">
+                    <td colspan="4" class="text-center">No applications for the active year</td>
                 </tr>
             </tbody>
         </table>
 
-            <!-- Pagination -->
-        <div class="pagination">
-            <button
-                class="pagination-btn"
-                :disabled="pagination.current_page === 1"
-                @click="goToPage(pagination.current_page - 1)"
-            >
-                Previous
-            </button>
-            <span class="pagination-info">
-                Page {{ pagination.current_page }} of {{ pagination.last_page }}
-            </span>
-            <button
-                class="pagination-btn"
-                :disabled="pagination.current_page === pagination.last_page"
-                @click="goToPage(pagination.current_page + 1)"
-            >
-                Next
-            </button>
-        </div>
+        <div class="page-title" style="margin-top:2rem;">Applications for Archived Years ({{ archivedApplications.length }})</div>
+        <table class="table-elevated-minimal">
+            <thead>
+                <tr>
+                    <th>School Year</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="app in archivedApplications" :key="app.id" @click="goToApplication(app.id)">
+                    <td>{{ app.school_year?.school_year || 'N/A' }}</td>
+                    <td>
+                        {{ app.lastName || app.last_name || '' }}, 
+                        {{ app.firstName || app.first_name || '' }} 
+                        {{ app.middleName || app.middle_name || '' }}
+                    </td>
+                    <td>{{ app.emailAddress || app.email_address || '' }}</td>
+                    <td>
+                        <span :class="`status status-${getStatusClass(app.applicationStatus || app.application_status)}`">
+                            {{ app.applicationStatus || app.application_status || 'For Review' }}
+                        </span>
+                    </td>
+                </tr>
+                <tr v-if="archivedApplications.length === 0">
+                    <td colspan="4" class="text-center">No applications for archived years</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-   
   </AdminIndex>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Inertia } from '@inertiajs/inertia';
 import AdminIndex from '../AdminIndex.vue';
+
+const hasData = ref(false);
+
+// Debugging - log the received data
+onMounted(() => {
+    console.log('=== APPLICATIONS DATA DEBUG ===');
+    console.log('Props received:', props);
+    console.log('Applications array:', props.applications);
+    console.log('Applications type:', typeof props.applications);
+    console.log('Is array?:', Array.isArray(props.applications));
+    
+    if (props.applications && Array.isArray(props.applications)) {
+        console.log('Applications count:', props.applications.length);
+        hasData.value = true;
+        
+        // Check first application structure
+        if (props.applications.length > 0) {
+            console.log('First application:', props.applications[0]);
+            console.log('First app keys:', Object.keys(props.applications[0]));
+            console.log('First app school_year:', props.applications[0].school_year);
+            
+            // Check specific field names
+            console.log('Available name fields:', {
+                firstName: props.applications[0].firstName,
+                first_name: props.applications[0].first_name,
+                lastName: props.applications[0].lastName,
+                last_name: props.applications[0].last_name,
+                emailAddress: props.applications[0].emailAddress,
+                email_address: props.applications[0].email_address,
+                applicationStatus: props.applications[0].applicationStatus,
+                application_status: props.applications[0].application_status
+            });
+        }
+    } else {
+        console.error('Applications is not an array or is undefined');
+        hasData.value = false;
+    }
+});
 
 function goToApplication(id: number) {
     Inertia.get(`/admin/applications/${id}`);
 }
-// Add this method to your script section
-function getStatusClass(status: string): string {
+
+// Fixed getStatusClass with null check
+function getStatusClass(status: string | undefined | null): string {
+  if (!status) return 'for-review';
+  
   const statusLower = status.toLowerCase();
   if (statusLower.includes('accepted')) return 'accepted';
   if (statusLower.includes('rejected')) return 'rejected';
   return 'for-review';
 }
 
+// Updated interface to handle both naming conventions
 interface Application {
-  id: number;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  emailAddress: string;
-  applicationStatus: string;
+    id: number;
+    // Support both camelCase and snake_case
+    firstName?: string;
+    first_name?: string;
+    middleName?: string;
+    middle_name?: string;
+    lastName?: string;
+    last_name?: string;
+    emailAddress?: string;
+    email_address?: string;
+    applicationStatus?: string;
+    application_status?: string;
+    school_year: {
+        id: number;
+        school_year: string;
+        is_active: boolean;
+    };
 }
 
-// Props from Laravel
-const props = defineProps<{
-  applications: Application[];
-  pagination: {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-  };
-}>();
+const props = defineProps<{ applications: Application[] }>();
 
-const search = ref('');
+// Helper function to get field values safely
 
-// Client-side filtering (optional)
-const filteredApplications = computed(() => {
-  if (!search.value) return props.applications;
-  const term = search.value.toLowerCase();
-  return props.applications.filter(
-    (app) =>
-      app.firstName.toLowerCase().includes(term) ||
-      app.middleName?.toLowerCase().includes(term) ||
-      app.lastName.toLowerCase().includes(term) ||
-      app.emailAddress.toLowerCase().includes(term) ||
-      app.applicationStatus.toLowerCase().includes(term)
-  );
+// Split applications by active school year with safety checks
+const activeApplications = computed(() => {
+    if (!props.applications || !Array.isArray(props.applications)) {
+        return [];
+    }
+    return props.applications.filter(a => a.school_year?.is_active);
 });
 
-// Pagination
-const pagination = ref(props.pagination);
-
-// Go to a specific page
-function goToPage(page: number) {
-  Inertia.get('/admin/applications', { page }, { preserveState: true, replace: true });
-}
+const archivedApplications = computed(() => {
+    if (!props.applications || !Array.isArray(props.applications)) {
+        return [];
+    }
+    return props.applications.filter(a => !a.school_year?.is_active);
+});
 </script>
-
 <style scoped>
 .applications-container{
-    padding: var(--space-16);
+    padding: var(--space-8);
     background: var(--color-light-bg);
 }
 .page-title{
@@ -133,21 +179,7 @@ function goToPage(page: number) {
     font-weight: 600;
     color: var(--color-primary);
     text-transform: uppercase;
-}
-.search-input {
-  width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-neutral);
-  border-radius: var(--radius-m);
-  font-size: var(--font-size-p);
-  margin-bottom: var(--space-6);
-  transition: all 0.2s ease;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--color-primary-light);
-  box-shadow: 0 0 0 2px var(--color-bright-green-25);
+    margin-bottom: var(--space-6);
 }
 
 /* Combined Table Style - Elevated Card with Minimal Header */
@@ -202,7 +234,6 @@ function goToPage(page: number) {
   border-radius: var(--radius-s);
   font-size: 1.2rem;
   font-weight: 500;
-
 }
 .status-accepted {
   background-color: var(--color-bright-green-25);
@@ -210,47 +241,13 @@ function goToPage(page: number) {
 }
 
 .status-rejected {
-  background-color: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
+  background-color: var(--color-rejected);
+  color: var(--color-rejected-text);
 }
 
 .status-for-review {
-  background-color: rgba(13, 110, 253, 0.15);
-  color: #0d6efd;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--space-8);
-}
-
-.pagination-btn {
-  padding: var(--space-3) var(--space-5);
-  border: 1px solid var(--color-neutral);
-  border-radius: var(--radius-m);
-  background-color: var(--color-background);
-  color: var(--color-primary);
-  font-size: var(--font-size-p);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background-color: var(--color-light-bg);
-  border-color: var(--color-primary-light);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  font-size: var(--font-size-p);
-  color: var(--color-primary);
+  background-color: var(--color-for-review);
+  color: var(--color-for-review-text);
 }
 
 /* Responsive adjustments */
@@ -262,11 +259,6 @@ function goToPage(page: number) {
   .table-elevated-minimal th,
   .table-elevated-minimal td {
     padding: var(--space-3);
-  }
-  
-  .pagination {
-    flex-direction: column;
-    gap: var(--space-4);
   }
 }
 </style>

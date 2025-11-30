@@ -1,12 +1,28 @@
 <template>
     <section class="header-nav-container">
         <ul class="header-nav">
-            <li class="submission-deadline">Next Submission Deadline: <b>30 June 2025</b></li>
+            <li class="submission-deadline">
+                <span v-if="deadline">Next Submission Deadline: <b>{{ formatDate(deadline) }}</b></span>
+                <span v-else><b>Applications Closed</b></span>
+            </li>
         </ul>
     </section>
 </template>
 
 <script lang="ts" setup>
+interface Props {
+  deadline?: string; 
+}
+
+const { deadline } = defineProps<Props>();
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
 </script>
 
 <script lang="ts">

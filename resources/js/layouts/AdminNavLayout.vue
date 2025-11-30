@@ -38,12 +38,12 @@
                         <span class="nav-text">Users</span>
                     </Link>
                     <Link 
-                        href="/admin/variables" 
+                        href="/admin/application-periods" 
                         class="navbar-item"
-                        :class="{ 'active': $page.url.startsWith('/admin/variables') }"
+                        :class="{ 'active': $page.url.startsWith('/admin/application-periods') }"
                     >
-                        <span class="material-icons">data_object</span>
-                        <span class="nav-text">Variables</span>
+                        <span class="material-icons">date_range</span>
+                        <span class="nav-text">Application Periods</span>
                     </Link>
             </ul>
             <div class="logout-section">

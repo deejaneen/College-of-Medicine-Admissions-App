@@ -12,7 +12,11 @@ class IndexController extends Controller
      */
     public function index()
     {
-         return inertia('Index');
+         $activeSchoolYear = \App\Models\SchoolYear::active()->first();
+    
+        return inertia('Index', [
+            'deadline' => $activeSchoolYear ? $activeSchoolYear->application_deadline : null,
+        ]);
     }
 
     /**

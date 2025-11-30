@@ -1,8 +1,8 @@
 <template>
     <div>
         <header>
-            <AuthSecondaryNavLayout/>
-            <AuthMainNavLayout/>
+            <AuthSecondaryNavLayout :deadline="props.deadline"/>
+            <AuthMainNavLayout />
         </header>
         <main class="main-container">
             <ApplicantDashboard :activeUser="props.activeUser ?? ''" />
@@ -19,7 +19,12 @@ import AuthMainNavLayout from '../layouts/AuthMainNavLayout.vue';
 import FooterLayout from '../layouts/FooterLayout.vue';
 import ApplicantDashboard from './auth-applicant/ApplicantDashboard.vue';
 
-const props = defineProps<{ activeUser: string }>();
+interface Props {
+  activeUser: string;
+  deadline?: string; 
+}
+
+const props = defineProps<Props>();
 </script>
 
 <style scoped>

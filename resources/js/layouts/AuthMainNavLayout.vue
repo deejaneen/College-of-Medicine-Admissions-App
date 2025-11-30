@@ -21,7 +21,7 @@
             </li>
 
             <li class="auth-navbar__item-application-form">
-              <Link :href="route('application.form')">
+              <Link :href="route('application.create')">
                 <span class="underline-animation">APPLICATION FORM</span>
               </Link>
             </li>

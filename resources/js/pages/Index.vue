@@ -1,8 +1,8 @@
 <template>
     <div class="main_container">
         <header>
-            <SecondaryNavLayout />
-            <MainNavLayout />
+            <SecondaryNavLayout :deadline="props.deadline"/>
+             <MainNavLayout/>
         </header>
         <main>
             <HeroSectionLayout />
@@ -22,6 +22,13 @@ import MainNavLayout from '../layouts/MainNavLayout.vue';
 import HeroSectionLayout from '../layouts/HeroSectionLayout.vue';
 import RequirementsAndQualificationsLayout from '../layouts/RequirementsAndQualificationsLayout.vue';
 import FooterLayout from '../layouts/FooterLayout.vue';
+
+interface Props {
+  deadline?: string;
+}
+
+const props = defineProps<Props>();
+
 </script>
 
 <style scoped>

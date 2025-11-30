@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Application extends Model
 {
@@ -12,63 +13,139 @@ class Application extends Model
     protected $table = 'applications';
 
     protected $fillable = [
-       // Step 1: Personal Information
-        'emailAddress',
-        'verifyEmailAddress',
-        'lastName',
-        'firstName',
-        'middleName',
-        'dateOfBirth',
+        'user_id',
+        'school_year_id',
+
+        // Personal Information
+        'email_address',
+        'last_name',
+        'first_name',
+        'middle_name',
+        'date_of_birth',
         'citizenship',
-        'permanentHomeAddress',
+        'permanent_home_address',
         'municipality',
         'province',
-        'zipCode',
-        'activeGmailAccount',
-        'cellphoneNumber',
-        'civilStatus',
+        'zip_code',
+        'active_gmail_account',
+        'cellphone_number',
+        'civil_status',
         'sex',
         'religion',
-        'indigenousGroup',
-        'indigenousGroupSpecify',
-        'physicalDisability',
-        'physicalDisabilitySpecify',
+        'indigenous_group',
+        'indigenous_group_specify',
+        'physical_disability',
+        'physical_disability_specify',
+        'community_health_volunteer',
+        'community_health_organization',
 
-        // Step 2: Educational Background - Bachelors
-        'bachelorsDegree',
-        'nameOfSchoolBachelorsDegree',
-        'gwaforBachelorsDegree',
-        'trascriptOfRecords',
+        // Educational Background
+        'bachelors_degree',
+        'name_of_school_bachelors_degree',
+        'gwa_for_bachelors_degree',
+        'bachelors_transcript_of_records',
+        'graduate_studies',
+        'name_of_school_graduate_studies',
+        'date_of_graduation',
+        'graduate_studies_transcript_of_records',
 
-        // Step 3: Family Information
-        'fatherLastName',
-        'fatherMiddleName',
-        'fatherFirstName',
-        'fatherOccupation',
-        'motherLastName',
-        'motherMiddleName',
-        'motherFirstName',
-        'motherOccupation',
-        'combinedAnnualIncomeOfFamily',
-        'communityHealthVolunteer',
-        'communityHealthOrganization',
+        // Family Information
+        'father_first_name',
+        'father_middle_name',
+        'father_last_name',
+        'father_occupation',
+        'mother_first_name',
+        'mother_middle_name',
+        'mother_last_name',
+        'mother_occupation',
+        'guardian_first_name',
+        'guardian_middle_name',
+        'guardian_last_name',
+        'guardian_occupation',
+        'combined_annual_income_of_family',
 
-        // Step 4: NMAT Information
-        'nmatNationalMedicalAdmissionTestScore',
-        'nmatNationalMedicalAdmissionTestCertification',
-        'dateOfNmatNationalMedicalAdmissionTestExamination',
+        // NMAT Information
+        'nmat_score',
+        'nmat_certification',
+        'date_of_nmat_examination',
 
-        // Step 5: Essay/Reason
-        'whyChooseSouthernLuzonStateUniversity',
+        // Essay
+        'why_choose_southern_luzon_state_university',
 
-        //Application status
-        'applicationStatus',
+        // System fields
+        'application_status',
     ];
-     protected $attributes = [
-        'applicationStatus' => 'For Review'
+    // ADD THESE CASTS FOR PROPER DATA HANDLING
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'date_of_graduation' => 'date',
+        'date_of_nmat_examination' => 'date',
+        'bachelors_transcript_of_records' => 'array',
+        'graduate_studies_transcript_of_records' => 'array',
+        'nmat_certification' => 'array',
+        'gwa_for_bachelors_degree' => 'decimal:2',
+        'nmat_score' => 'integer',
     ];
+
+    protected $attributes = [
+        'application_status' => 'For Review'
+    ];
+
     protected $hidden = [
-        // Add any attributes you want to hide from JSON/array output
-        // For example: 'password', 'remember_token', etc.
+        // Add any sensitive fields you don't want exposed in APIs
     ];
+
+    public function schoolYear()
+    {
+        return $this->belongsTo(SchoolYear::class, 'school_year_id');
+    }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+    // ADD THESE HELPER METHODS
+    public function getFullNameAttribute()
+    {
+        return "{$this->lastName}, {$this->firstName} " . ($this->middleName ? "{$this->middleName}" : "");
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('applicationStatus', 'For Review');
+    }
+
+    public function scopeAccepted($query)
+    {
+        return $query->where('applicationStatus', 'Accepted');
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('applicationStatus', 'Rejected');
+    }
+
+    public function scopeWaitlist($query)
+    {
+        return $query->where('applicationStatus', 'Waitlist');
+    }
+
+    public function isPending()
+    {
+        return $this->applicationStatus === 'For Review';
+    }
+
+    public function isAccepted()
+    {
+        return $this->applicationStatus === 'Accepted';
+    }
+
+    public function isRejected()
+    {
+        return $this->applicationStatus === 'Rejected';
+    }
+
+    public function isWaitlist()
+    {
+        return $this->applicationStatus === 'Waitlist';
+    }
 }

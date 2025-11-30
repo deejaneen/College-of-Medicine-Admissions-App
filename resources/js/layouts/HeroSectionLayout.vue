@@ -43,7 +43,6 @@ let typed: any = null;
 </script>
 
 <script lang="ts" setup>
-  
 
 onMounted(() => {
   // Check if Typed is already loaded (from index.html or previous load)
@@ -241,7 +240,7 @@ onUnmounted(() => {
     max-width: 60rem;
     width: 90%;
     position: relative;
-    z-index: 2;
+    z-index: 20;
     border: 0.1rem solid var(--color-neutral);
 }
 
