@@ -109,43 +109,47 @@ class Application extends Model
         return "{$this->lastName}, {$this->firstName} " . ($this->middleName ? "{$this->middleName}" : "");
     }
 
+    // In your Application model (App\Models\Application.php)
+
+    // UPDATE THESE SCOPES:
     public function scopePending($query)
     {
-        return $query->where('applicationStatus', 'For Review');
+        return $query->where('application_status', 'For Review');
     }
 
     public function scopeAccepted($query)
     {
-        return $query->where('applicationStatus', 'Accepted');
+        return $query->where('application_status', 'Accepted');
     }
 
     public function scopeRejected($query)
     {
-        return $query->where('applicationStatus', 'Rejected');
+        return $query->where('application_status', 'Rejected');
     }
 
     public function scopeWaitlist($query)
     {
-        return $query->where('applicationStatus', 'Waitlist');
+        return $query->where('application_status', 'Waitlist');
     }
 
+    // UPDATE THESE HELPER METHODS:
     public function isPending()
     {
-        return $this->applicationStatus === 'For Review';
+        return $this->application_status === 'For Review';
     }
 
     public function isAccepted()
     {
-        return $this->applicationStatus === 'Accepted';
+        return $this->application_status === 'Accepted';
     }
 
     public function isRejected()
     {
-        return $this->applicationStatus === 'Rejected';
+        return $this->application_status === 'Rejected';
     }
 
     public function isWaitlist()
     {
-        return $this->applicationStatus === 'Waitlist';
+        return $this->application_status === 'Waitlist';
     }
 }

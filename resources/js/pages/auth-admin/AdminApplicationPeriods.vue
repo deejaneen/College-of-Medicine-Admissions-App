@@ -1,114 +1,170 @@
 <template>
     <AdminIndex>
-        <div class="application-periods-container">
-            <div class="page-title">Application Periods</div>
-            <p class="page-subtitle">Manage application deadlines and school years</p>
-
-            <!-- Create New Application Period -->
-            <div class="card">
-                <h3>Open New Application Period</h3>
-                <form @submit.prevent="createApplicationPeriod" class="form">
-                    <div class="form-group">
-                        <label for="school_year">School Year Range:</label>
-                        <input
-                            type="text"
-                            id="school_year"
-                            v-model="newApplicationPeriod.school_year"
-                            placeholder="e.g., 2025-2026"
-                            required
-                            class="form-input"
-                        >
-                        <small class="help-text">Format: YYYY-YYYY (e.g., 2025-2026)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="application_deadline">Application Deadline:</label>
-                        <input
-                            type="date"
-                            id="application_deadline"
-                            v-model="newApplicationPeriod.application_deadline"
-                            required
-                            class="form-input"
-                        >
-                        <small class="help-text">Forms will automatically close after this date</small>
-                    </div>
-                    <button type="submit" class="btn-primary">Open Application Period</button>
-                </form>
+        <div class="applications-container">
+            <div class="page-header">
+                <h1 class="page-title">Application Periods</h1>
             </div>
 
-            <!-- Current Active Application Period -->
-            <div class="card" v-if="currentActive">
-                <h3>Current Active Application Period</h3>
-                <div class="active-period">
-                    <div class="period-info">
-                        <strong>School Year: {{ currentActive.school_year }}</strong>
-                        <span>Deadline: {{ formatDate(currentActive.application_deadline) }}</span>
-                        <span :class="`status status-${currentActive.is_open ? 'accepted' : 'rejected'}`">
-                            {{ currentActive.is_open ? 'Open' : 'Closed' }}
-                        </span>
+            <!-- TWO COLUMN LAYOUT -->
+            <div class="applications-grid">
+                <!-- CREATE NEW PERIOD CARD -->
+                <div class="applications-card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <h3 class="card-title">Open New Application Period</h3>
+                        </div>
                     </div>
-                    <div class="period-actions">
-                        <button 
-                            @click="closeApplications(currentActive)" 
-                            class="btn-warning"
-                            v-if="currentActive.is_open"
-                        >
-                            Close Applications Early
-                        </button>
+                    
+                    <div class="card-content">
+                        <form @submit.prevent="createApplicationPeriod" class="period-form">
+                            <div class="form-group">
+                                <label for="school_year" class="form-label">School Year Range:</label>
+                                <input
+                                    type="text"
+                                    id="school_year"
+                                    v-model="newApplicationPeriod.school_year"
+                                    placeholder="e.g., 2025-2026"
+                                    required
+                                    class="form-input"
+                                >
+                                <small class="form-helper">Format: YYYY-YYYY (e.g., 2025-2026)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="application_deadline" class="form-label">Application Deadline:</label>
+                                <input
+                                    type="date"
+                                    id="application_deadline"
+                                    v-model="newApplicationPeriod.application_deadline"
+                                    required
+                                    class="form-input"
+                                >
+                                <small class="form-helper">Forms will automatically close after this date</small>
+                            </div>
+                            <button type="submit" class="btn-primary">Open Application Period</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- CURRENT ACTIVE PERIOD CARD -->
+                <div class="applications-card" v-if="currentActive">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <h3 class="card-title">Current Active Period</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="card-content">
+                        <div class="active-period-info">
+                            <div class="info-group">
+                                <div class="info-label">School Year:</div>
+                                <div class="info-value">{{ currentActive.school_year }}</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Deadline:</div>
+                                <div class="info-value">{{ formatDate(currentActive.application_deadline) }}</div>
+                            </div>
+                            <div class="info-group">
+                                <div class="info-label">Status:</div>
+                                <div class="info-value">
+                                    <span :class="`status-badge status-${currentActive.is_open ? 'accepted' : 'rejected'}`">
+                                        {{ currentActive.is_open ? 'Open' : 'Closed' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-actions" v-if="currentActive.is_open">
+                            <button 
+                                @click="closeApplications(currentActive)" 
+                                class="btn-warning"
+                            >
+                                Close Applications Early
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- All Application Periods -->
-            <div class="card">
-                <h3>All Application Periods</h3>
-                <table class="table-elevated-minimal">
-                    <thead>
-                        <tr>
-                            <th>School Year</th>
-                            <th>Deadline</th>
-                            <th>Status</th>
-                            <th>Applications</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="period in schoolYears" :key="period.id">
-                            <td>{{ period.school_year }}</td>
-                            <td>
-                               <input
-                                    type="date"
-                                    v-model="period.application_deadline"
-                                    @change="updateDeadline(period, $event)"
-                                    class="date-input"
-                                    :disabled="!period.is_active"
-                                />
-
-                            </td>
-                            <td>
-                                <span :class="`status status-${period.is_active ? 'accepted' : 'for-review'}`">
-                                    {{ period.is_active ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td>{{ period.applications_count }}</td>
-                            <td class="actions">
-                                <button
-                                    v-if="!period.is_active"
-                                    @click="activateApplicationPeriod(period)"
-                                    class="btn-secondary"
-                                >
-                                    Activate
-                                </button>
-                                <button
-                                    v-if="!period.is_active && period.applications_count === 0"
-                                    @click="deleteApplicationPeriod(period)"
-                                    class="btn-danger"
-                                >
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- ALL APPLICATION PERIODS CARD -->
+            <div class="applications-card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <h3 class="card-title">All Application Periods</h3>
+                        <span v-if="schoolYears.meta" class="meta-info">
+                            {{ schoolYears.meta.from }}-{{ schoolYears.meta.to }} of {{ schoolYears.meta.total }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-content">
+                    <table class="compact-table">
+                        <thead>
+                            <tr>
+                                <th>School Year</th>
+                                <th>Deadline</th>
+                                <th>Status</th>
+                                <th>Applications</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="period in editablePeriods" :key="period.id">
+                                <td class="applicant-name">{{ period.school_year }}</td>
+                                <td>
+                                   <input
+                                        type="date"
+                                        :value="period.application_deadline"
+                                        @change="updateDeadline(period, $event)"
+                                        class="date-input"
+                                        :disabled="!period.is_active"
+                                    />
+                                </td>
+                                <td>
+                                    <span :class="`status-badge status-${period.is_active ? 'accepted' : 'for-review'}`">
+                                        {{ period.is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td>{{ period.applications_count }}</td>
+                                <td class="actions-cell">
+                                    <div class="actions">
+                                        <button
+                                            v-if="!period.is_active"
+                                            @click="activateApplicationPeriod(period)"
+                                            class="btn-secondary mini"
+                                        >
+                                            Activate
+                                        </button>
+                                        <button
+                                            v-if="!period.is_active && period.applications_count === 0"
+                                            @click="deleteApplicationPeriod(period)"
+                                            class="btn-danger mini"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="editablePeriods.length === 0">
+                                <td colspan="5" class="empty-state">
+                                    <div class="empty-icon">📅</div>
+                                    <div class="empty-text">No application periods found</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination -->
+                    <div v-if="schoolYears.links?.length > 3" class="pagination-section">
+                        <Pagination 
+                            :links="schoolYears.links" 
+                            :from="schoolYears.meta?.from"
+                            :to="schoolYears.meta?.to"
+                            :total="schoolYears.meta?.total"
+                            :current-page="schoolYears.meta?.current_page"
+                            :last-page="schoolYears.meta?.last_page"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     </AdminIndex>
@@ -118,6 +174,7 @@
 import { ref, onMounted } from 'vue';
 import { Inertia } from '@inertiajs/inertia';
 import AdminIndex from '../AdminIndex.vue';
+import Pagination from './Pagination.vue';
 
 interface ApplicationPeriod {
     id: number;
@@ -128,9 +185,27 @@ interface ApplicationPeriod {
     is_open?: boolean;
 }
 
+interface PaginatedSchoolYears {
+    data: ApplicationPeriod[];
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+    meta: {
+        current_page: number;
+        from: number;
+        to: number;
+        total: number;
+        last_page: number;
+        per_page: number;
+        path: string;
+    };
+}
+
 // Props from Laravel
 const props = defineProps<{
-    schoolYears: ApplicationPeriod[];
+    schoolYears: PaginatedSchoolYears;
     currentActive: ApplicationPeriod | null;
 }>();
 
@@ -138,7 +213,7 @@ const props = defineProps<{
 const editablePeriods = ref<ApplicationPeriod[]>([]);
 
 onMounted(() => {
-    editablePeriods.value = props.schoolYears.map(p => ({ ...p }));
+    editablePeriods.value = props.schoolYears.data ? [...props.schoolYears.data] : [];
 });
 
 const newApplicationPeriod = ref({
@@ -160,53 +235,119 @@ function createApplicationPeriod() {
         return;
     }
 
+    // Validate date is in the future
+    const selectedDate = new Date(newApplicationPeriod.value.application_deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+        alert('Application deadline must be in the future');
+        return;
+    }
+
     // Submit form to Laravel using Inertia
     Inertia.post('/admin/school-years', newApplicationPeriod.value, {
+        preserveState: true,
+        preserveScroll: true,
         onSuccess: () => {
-            // reset form
             newApplicationPeriod.value = {
                 school_year: '',
                 application_deadline: ''
             };
+            alert('Application period created successfully!');
         },
         onError: (errors) => {
-            console.log(errors);
-            alert("Something went wrong, check input.");
+            console.log('Create errors:', errors);
+            if (errors.school_year) {
+                alert(errors.school_year);
+            } else if (errors.application_deadline) {
+                alert(errors.application_deadline);
+            } else {
+                alert("Something went wrong, please check your input.");
+            }
         }
     });
 }
-
 
 function updateDeadline(period: ApplicationPeriod, event: Event) {
     const target = event.target as HTMLInputElement;
+    const newDate = target.value;
+    
+    const selectedDate = new Date(newDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+        alert('Application deadline must be in the future');
+        target.value = period.application_deadline;
+        return;
+    }
+
+    const periodIndex = editablePeriods.value.findIndex(p => p.id === period.id);
+    if (periodIndex !== -1) {
+        editablePeriods.value[periodIndex].application_deadline = newDate;
+    }
 
     Inertia.put(`/admin/school-years/${period.id}`, {
-        application_deadline: target.value
+        application_deadline: newDate
     }, {
+        preserveState: true,
+        preserveScroll: true,
         onSuccess: () => {
-            alert(`Deadline updated successfully for ${period.school_year}`);
+            console.log(`Deadline updated successfully for ${period.school_year}`);
         },
         onError: (errors) => {
-            alert(errors.application_deadline || 'Something went wrong');
+            if (periodIndex !== -1) {
+                editablePeriods.value[periodIndex].application_deadline = period.application_deadline;
+            }
+            alert(errors.application_deadline || 'Something went wrong updating the deadline');
         }
     });
 }
 
-
-
 function activateApplicationPeriod(period: ApplicationPeriod) {
-    Inertia.post(`/admin/school-years/${period.id}/activate`, {});
+    if (confirm(`Activate application period for ${period.school_year}? This will deactivate any currently active period.`)) {
+        Inertia.post(`/admin/school-years/${period.id}/activate`, {}, {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                alert(`Application period for ${period.school_year} is now active!`);
+            },
+            onError: (errors) => {
+                alert(errors.message || 'Failed to activate application period');
+            }
+        });
+    }
 }
 
 function closeApplications(period: ApplicationPeriod) {
     if (confirm(`Close applications for ${period.school_year}? This cannot be undone.`)) {
-        Inertia.post(`/admin/school-years/${period.id}/close`, {});
+        Inertia.post(`/admin/school-years/${period.id}/close`, {}, {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                alert(`Applications for ${period.school_year} have been closed.`);
+            },
+            onError: (errors) => {
+                alert(errors.message || 'Failed to close applications');
+            }
+        });
     }
 }
 
 function deleteApplicationPeriod(period: ApplicationPeriod) {
-    if (confirm('Are you sure you want to delete this application period?')) {
-        Inertia.delete(`/admin/school-years/${period.id}`);
+    if (confirm(`Are you sure you want to delete the ${period.school_year} application period? This action cannot be undone.`)) {
+        Inertia.delete(`/admin/school-years/${period.id}`, {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                editablePeriods.value = editablePeriods.value.filter(p => p.id !== period.id);
+                alert('Application period deleted successfully!');
+            },
+            onError: (errors) => {
+                alert(errors.message || 'Failed to delete application period');
+            }
+        });
     }
 }
 
@@ -220,222 +361,437 @@ function formatDate(dateString: string) {
 </script>
 
 <style scoped>
-.application-periods-container {
-    padding: var(--space-8);
-    background: var(--color-light-bg);
+.applications-container {
+  padding: var(--space-8);
+  background: var(--color-light-bg);
+  min-height: 100vh;
+  font-family: var(--font-alt);
+}
+
+.page-header {
+  margin-bottom: var(--space-8);
 }
 
 .page-title {
-    font-size: var(--font-size-h4);
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    margin-bottom: var(--space-2);
-}
-
-.page-subtitle {
-    color: var(--color-text-light);
-    margin-bottom: var(--space-6);
-    font-size: var(--font-size-p);
-}
-
-.card {
-    background: var(--color-background);
-    padding: var(--space-6);
-    border-radius: var(--radius-l);
-    box-shadow: var(--elevation-2);
-    margin-bottom: var(--space-6);
-
-}
-
-.card h3 {
-    color: var(--color-primary);
-    margin-bottom: var(--space-4);
-    font-size: var(--font-size-h5);
-}
-
-.form {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: var(--space-4);
-    align-items: end;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.help-text {
-    color: var(--color-text-light);
-    font-size: var(--font-size-p);
-    margin-top: var(--space-1);
-}
-
-.form-input, .date-input {
-    padding: var(--space-3);
-    border: 1px solid var(--color-neutral);
-    border-radius: var(--radius-m);
-    font-size: var(--font-size-p);
-}
-
-.active-period {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.period-info {
-    display: flex;
-    gap: var(--space-6);
-    align-items: center;
-     font-size: var(--font-size-p);
-}
-
-.period-actions {
-    display: flex;
-    gap: var(--space-4);
-    font-size: var(--font-size-p);
-}
-
-.actions {
-    display: flex;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-}
-
-.btn-primary, .btn-secondary, .btn-danger, .btn-warning {
-    padding: var(--space-3) var(--space-5);
-    border: none;
-    border-radius: var(--radius-m);
-    cursor: pointer;
-    font-size: var(--font-size-p);
-    white-space: nowrap;
-    transition: all 0.2s ease;
-}
-
-.btn-primary {
-    background: var(--color-primary-80);
-    color: white;
-}
-
-.btn-primary:hover {
-    background: var(--color-primary);
-}
-
-.btn-secondary {
-    background: var(--color-bright-green-25);
-    color: var(--color-primary);
-    border: 1px solid var(--color-bright-green);
-}
-
-.btn-secondary:hover {
-    background: var(--color-bright-green);
-}
-
-.btn-danger {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-}
-
-.btn-warning {
-    background: var(--color-secondary-80);
-    color: #212529;
-}
-
-.btn-warning:hover {
-    background: var(--color-secondary);
-}
-
-.table-elevated-minimal {
-  width: 100%;
-  border-collapse: collapse;
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--font-size-p);
+}
+
+.applications-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  max-width: 1600px;
+  margin: 0 auto 24px;
+}
+
+@media (max-width: 1200px) {
+  .applications-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+}
+
+.applications-card {
   background: var(--color-background);
   border-radius: var(--radius-l);
   overflow: hidden;
-  box-shadow: var(--elevation-3);
+  box-shadow: var(--elevation-2);
+  border: 1px solid var(--color-neutral);
+  border-left: 4px solid var(--color-primary);
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
 }
 
-.table-elevated-minimal th {
-  background-color: var(--color-light-bg);
-  color: var(--color-primary);
+.card-header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-neutral);
+  background: var(--color-background);
+}
+
+.card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card-title {
+  font-size: var(--font-size-h6);
   font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
   text-transform: uppercase;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.meta-info {
+  font-size: var(--font-size-p);
+  color: var(--color-neutral-dark);
+  font-weight: 500;
+  font-family: var(--font-alt);
+}
+
+.card-content {
+  padding: var(--space-6);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.period-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: var(--font-size-p);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-sans);
+}
+
+.form-input {
+  padding: var(--space-3);
+  border: 1px solid var(--color-neutral);
+  border-radius: var(--radius-m);
+  font-size: var(--font-size-p);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  transition: all 0.2s ease;
+  font-family: var(--font-alt);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+.form-helper {
+  font-size: var(--font-size-p);
+  color: var(--color-neutral-dark);
+  font-family: var(--font-alt);
+}
+
+.btn-primary {
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-primary);
+  color: var(--color-background);
+  border: none;
+  border-radius: var(--radius-m);
+  font-size: var(--font-size-p);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-sans);
+  align-self: flex-start;
+}
+
+.btn-primary:hover {
+  background: rgba(13, 110, 253, 0.8);
+  transform: translateY(-1px);
+}
+
+.active-period-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.info-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.info-label {
+  font-size: var(--font-size-p);
+  font-weight: 600;
+  color: var(--color-text-light);
+  min-width: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-sans);
+}
+
+.info-value {
+  font-size: var(--font-size-p);
+  color: var(--color-foreground);
+  font-family: var(--font-alt);
+}
+
+.card-actions {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-neutral);
+}
+
+.btn-warning {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-secondary-20);
+  color: var(--color-secondary);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-m);
+  font-size: var(--font-size-p);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-sans);
+}
+
+.btn-warning:hover {
+  background: var(--color-secondary);
+  color: var(--color-background);
+}
+
+.compact-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-alt);
+  font-size: var(--font-size-p);
+  margin-bottom: var(--space-6);
+}
+
+.compact-table thead {
+  background: var(--color-light-bg);
+}
+
+.compact-table th {
+  padding: var(--space-3) var(--space-4);
   text-align: left;
-  padding: var(--space-4);
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: var(--font-size-p);
+  font-family: var(--font-sans);
   border-bottom: 2px solid var(--color-primary-light);
 }
 
-.table-elevated-minimal td {
-  padding: var(--space-5);
-}
-
-
-.table-elevated-minimal tr {
+.compact-table td {
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-neutral);
+  vertical-align: middle;
 }
-.table-elevated-minimal tr:last-child td {
+
+.compact-table tr:last-child td {
   border-bottom: none;
 }
 
-.table-elevated-minimal tr:nth-child(even) {
-  background-color: var(--color-light-bg-40);
-}
-
-.table-elevated-minimal tr:hover {
-  background-color: var(--color-bright-green-25);
+.compact-table tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
   transition: background-color 0.2s ease;
 }
 
-.status {
-  display: inline-block;
+.compact-table tr:hover td {
+  border-color: var(--color-primary-light);
+}
+
+.applicant-name {
+  font-weight: 500;
+  color: var(--color-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.date-input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-neutral);
+  border-radius: var(--radius-m);
+  font-size: var(--font-size-p);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  transition: all 0.2s ease;
+  font-family: var(--font-alt);
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+.date-input:disabled {
+  background: var(--color-light-bg);
+  color: var(--color-neutral-dark);
+  cursor: not-allowed;
+}
+
+.actions-cell {
+  min-width: 120px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.btn-secondary.mini,
+.btn-danger.mini {
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-s);
-  font-size: 1.2rem;
-  font-weight: 500;
+  font-size: var(--font-size-p);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary.mini {
+  background: var(--color-primary);
+  color: var(--color-background);
+}
+
+.btn-secondary.mini:hover {
+    transform: translateY(1px);
+}
+
+.btn-danger.mini {
+  background: var(--color-rejected);
+  color: var(--color-rejected-text);
+}
+
+.btn-danger.mini:hover {
+  background: var(--color-rejected-text);
+  color: var(--color-background);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-s);
+  font-size: var(--font-size-p);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-sans);
+  white-space: nowrap;
 }
 
 .status-accepted {
-  background-color: var(--color-bright-green-25);
+  background: var(--color-bright-green-25);
   color: var(--color-primary);
 }
 
 .status-rejected {
-  background-color: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
+  background: var(--color-rejected);
+  color: var(--color-rejected-text);
 }
 
 .status-for-review {
-  background-color: rgba(13, 110, 253, 0.15);
-  color: #0d6efd;
+  background: var(--color-for-review);
+  color: var(--color-for-review-text);
 }
 
-/* Responsive */
+.empty-state {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-neutral);
+}
+
+.empty-icon {
+  font-size: var(--font-size-h5);
+  margin-bottom: var(--space-3);
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: var(--font-size-p);
+  font-style: italic;
+  font-family: var(--font-alt);
+}
+
+.pagination-section {
+  margin-top: auto;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-neutral);
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .form {
-        grid-template-columns: 1fr;
-    }
-    
-    .active-period {
-        flex-direction: column;
-        gap: var(--space-4);
-        align-items: start;
-    }
-    
-    .period-info {
-        flex-direction: column;
-        gap: var(--space-2);
-        align-items: start;
-    }
-    
-    .actions {
-        flex-direction: column;
-    }
+  .applications-container {
+    padding: var(--space-4);
+  }
+  
+  .applications-grid {
+    gap: var(--space-4);
+  }
+  
+  .applications-card {
+    border-radius: var(--radius-m);
+  }
+  
+  .card-header {
+    padding: var(--space-4);
+  }
+  
+  .card-content {
+    padding: var(--space-4);
+  }
+  
+  .card-title {
+    font-size: var(--font-size-p);
+  }
+  
+  .compact-table {
+    font-size: 1.3rem;
+  }
+  
+  .compact-table th,
+  .compact-table td {
+    padding: var(--space-2) var(--space-3);
+  }
+  
+  .info-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+  
+  .info-label {
+    min-width: auto;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .btn-secondary.mini,
+  .btn-danger.mini {
+    width: 100%;
+  }
+  
+  .applicant-name {
+    max-width: 120px;
+  }
 }
 </style>

@@ -1,15 +1,18 @@
 <template>
   <AdminIndex>
     <div class="application-detail-container">
-       <div class="application-display-container">
-      <!-- Header Section -->
-      <div class="display-header">
-        <div class="header-main">
-          <h1 class="page-title">
+      <div class="page-header">
+        <h1 class="page-title">
             Application Details
             <span class="slash">/</span>
             <span class="name">{{ application.last_name }}, {{ application.first_name }} {{ application.middle_name }}</span>
           </h1>
+      </div>
+       <div class="application-display-container">
+      <!-- Header Section -->
+      <div class="display-header">
+        <div class="header-main">
+          
           <div class="application-meta">
             <span class="meta-badge">Submitted: {{ formatDate(application.created_at) }}</span>
             <span class="meta-badge">School Year: {{ application.school_year?.school_year }}</span>
@@ -394,13 +397,14 @@ function rejectApplication(): void {
 
 <style scoped>
 .application-detail-container {
+  padding: var(--space-8);
   background: var(--color-light-bg);
+  min-height: 100vh;
+  font-family: var(--font-alt);
 }
 /* Main Container */
 .application-display-container {
   max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--space-16) 0;
   background: var(--color-light-bg);
   min-height: 100vh;
 }
@@ -423,13 +427,16 @@ function rejectApplication(): void {
   flex-wrap: wrap;
   gap: var(--space-4);
 }
-
+.page-header {
+  margin-bottom: var(--space-8);
+}
 .page-title {
-  font-size: var(--font-size-h4);
-  font-weight: 600;
-  color: var(--color-primary);
-  text-transform: uppercase;
-  margin: 0;
+    font-size: var(--font-size-h4);
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    margin-bottom: var(--space-2);
+    font-family: var(--font-sans);
 }
 
 .page-title .slash {

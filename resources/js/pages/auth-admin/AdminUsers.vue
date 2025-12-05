@@ -25,3 +25,4 @@ import AdminIndex from '../AdminIndex.vue'
 const props = defineProps<{ users: Array<{id:number,name:string,email:string,role:string}> }>()
 const users = props.users
 </script>
+
