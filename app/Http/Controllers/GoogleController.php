@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Services\ActionLogger;
 use Exception;
 
 class GoogleController extends Controller
@@ -57,8 +58,17 @@ class GoogleController extends Controller
                     'role' => 'Applicant',
                     'password' => Hash::make(Str::random(32)),
                 ]);
+                // ActionLogger::log(
+                //     'create',
+                //     'users',
+                //     "Created user {$user->name} via Google OAuth",
+                // );
             }
-
+            // ActionLogger::log(
+            //     'login',
+            //     'users',
+            //     "Applicant {$user->name} logged in via Google OAuth"
+            // );
             Auth::login($user, true);
 
             return redirect()->route('application.create');

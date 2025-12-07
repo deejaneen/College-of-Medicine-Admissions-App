@@ -1,134 +1,111 @@
 <template>
     <div class="page-container">
-    <div class="login-container">
-        <div class="login-header">
-            <h1>SLSU Admin Login</h1>
-        </div>
-        
-        <div class="login-card">
-            <div v-if="errorMessage" class="error-message">
-                {{ errorMessage }}
+        <div class="login-container">
+            <div class="login-header">
+                <h1>SLSU Admin Login</h1>
             </div>
             
-            <div v-if="successMessage" class="success-message">
-                {{ successMessage }}
+            <div class="login-card">
+                <!-- Show form errors from Inertia -->
+                <div v-if="Object.keys(form.errors).length > 0" class="error-message">
+                    <div v-for="error in form.errors" :key="error">
+                        {{ error }}
+                    </div>
+                </div>
+                
+                <!-- Show flash messages from Laravel session -->
+                <div v-if="props.flash?.error" class="error-message">
+                    {{ props.flash.error }}
+                </div>
+                
+                <div v-if="props.flash?.success" class="success-message">
+                    {{ props.flash.success }}
+                </div>
+                
+                <form @submit.prevent="form.post('/admin/login')">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input
+                            id="email"
+                            v-model="form.email"
+                            type="email"
+                            class="form-input"
+                            :class="{ 'error': form.errors.email }"
+                            placeholder="admin@slsu.edu.ph"
+                            required
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input
+                            id="password"
+                            v-model="form.password"
+                            type="password"
+                            class="form-input"
+                            :class="{ 'error': form.errors.password }"
+                            placeholder="Enter your password"
+                            required
+                        />
+                    </div>
+
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" v-model="form.remember" />
+                            Remember me
+                        </label>
+                        <a href="#" class="forgot-password">Forgot password?</a>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        class="login-button"
+                        :disabled="form.processing"
+                    >
+                        <span v-if="form.processing">Signing in...</span>
+                        <span v-else>Sign In</span>
+                    </button>
+                </form>
             </div>
             
-            <form @submit.prevent="handleLogin">
-                <div class="form-group">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input
-                        id="email"
-                        v-model="form.email"
-                        type="email"
-                        class="form-input"
-                        placeholder="admin@slsu.edu.ph"
-                        required
-                    />
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input
-                        id="password"
-                        v-model="form.password"
-                        type="password"
-                        class="form-input"
-                        placeholder="Enter your password"
-                        required
-                    />
-                </div>
-
-                <div class="form-options">
-                    <label class="checkbox-label">
-                        <input type="checkbox" v-model="form.rememberMe" />
-                        Remember me
-                    </label>
-                    <a href="#" class="forgot-password">Forgot password?</a>
-                </div>
-
-                <button 
-                    type="submit" 
-                    class="login-button"
-                    :disabled="loading"
-                >
-                    <span v-if="loading">Signing in...</span>
-                    <span v-else>Sign In</span>
-                </button>
-            </form>
-        </div>
-        
-        <div class="brand-footer">
-            <p>South Luzon State University <strong>Admin Portal</strong></p>
+            <div class="brand-footer">
+                <p>South Luzon State University <strong>Admin Portal</strong></p>
+            </div>
         </div>
     </div>
-    </div>
-    
 </template>
+
 <script lang="ts" setup>
-import { ref } from 'vue';
-import axios, { AxiosError } from 'axios';
-import { useRouter } from 'vue-router';
+import { useForm } from '@inertiajs/vue3';
 
-const router = useRouter();
-
-// Type definitions
-interface LoginForm {
-    email: string;
-    password: string;
-    rememberMe: boolean;
+interface Props {
+    flash?: {
+        error?: string;
+        success?: string;
+        message?: string;
+    };
+    errors?: Record<string, string>;
 }
 
-const form = ref<LoginForm>({
+const props = defineProps<Props>();
+
+// Use Inertia's form helper
+const form = useForm({
     email: '',
     password: '',
-    rememberMe: false
+    remember: false,
 });
 
-const loading = ref<boolean>(false);
-const errorMessage = ref<string>('');
-const successMessage = ref<string>('');
-
-const handleLogin = async (): Promise<void> => {
-    loading.value = true;
-    errorMessage.value = '';
-    successMessage.value = '';
-
-    try {
-        axios.defaults.withCredentials = true;
-
-        // CSRF cookie (required by Laravel Sanctum)
-        await axios.get('/sanctum/csrf-cookie');
-
-        // Attempt login
-        await axios.post('/login', {
-            email: form.value.email,
-            password: form.value.password,
-            remember: form.value.rememberMe
-        });
-
-        successMessage.value = "Login successful! Redirecting...";
-
-        // Redirect to admin dashboard
-        setTimeout(() => {
-            router.push('/admin/dashboard');
-        }, 800);
-
-    } catch (err) {
-        const error = err as AxiosError;
-
-        if (error.response?.status === 422) {
-            errorMessage.value = "Invalid email or password.";
-        } else {
-            errorMessage.value = "Something went wrong. Please try again.";
-        }
-    } finally {
-        loading.value = false;
-    }
-};
 </script>
 
 <style scoped>
+    /* Keep all your existing styles, just add this: */
+    .form-input.error {
+        border-color: #e74c3c;
+        box-shadow: 0 0 0 0.3rem rgba(231, 76, 60, 0.25);
+    }
+    
+    /* The rest of your existing CSS stays exactly the same */
     .page-container{
         background: var(--color-light-bg);
         display: flex;

@@ -21,7 +21,6 @@
             </span>
           </div>
         </div>
-        <p>Medical School Application - Complete Application Details</p>
       </div>
 
       <!-- Main Content Grid -->
@@ -312,14 +311,165 @@
       </div>
     </div>
     </div>
-   
+   <!-- Approve Confirmation Modal -->
+<div v-if="showApproveModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-icon warning">
+      <span class="material-icons">check_circle_outline</span>
+    </div>
+    <!-- In Approve Confirmation Modal -->
+    <h3 class="modal-title">{{ modalTitle }}</h3>
+    <div class="modal-message" v-html="modalMessage"></div>
+
+    <div class="application-summary">
+      <p><strong>Applicant:</strong> {{ application.first_name }} {{ application.last_name }}</p>
+      <p><strong>Email:</strong> {{ application.email_address }}</p>
+      <p><strong>NMAT Score:</strong> {{ application.nmat_score }}</p>
+    </div>
+    <p class="warning-text">
+      <span class="material-icons" style="vertical-align: middle; margin-right: 5px;">warning</span>
+      Approving this does not send a direct email to the applicant.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-secondary" @click="cancelAction" :disabled="isProcessing">
+        Cancel
+      </button>
+      <button class="btn-success" @click="confirmAction" :disabled="isProcessing">
+        <span v-if="isProcessing" class="spinner"></span>
+        {{ isProcessing ? 'Processing...' : 'Yes, Approve' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Waitlist Confirmation Modal -->
+<div v-if="showWaitlistModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-icon warning">
+      <span class="material-icons">access_time</span>
+    </div>
+    
+    <h3 class="modal-title">{{ modalTitle }}</h3>
+    <div class="modal-message" v-html="modalMessage"></div>
+
+    <div class="application-summary">
+      <p><strong>Applicant:</strong> {{ application.first_name }} {{ application.last_name }}</p>
+      <p><strong>Email:</strong> {{ application.email_address }}</p>
+      <p><strong>Current Status:</strong> <span :class="`status-badge status-${getStatusClass(application.application_status)}`">
+        {{ application.application_status }}
+      </span></p>
+    </div>
+    <p class="warning-text">
+      <span class="material-icons" style="vertical-align: middle; margin-right: 5px;">warning</span>
+      The applicant will be placed on the waitlist and may be considered if spots become available.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-secondary" @click="cancelAction" :disabled="isProcessing">
+        Cancel
+      </button>
+      <button class="btn-waitlist" @click="confirmAction" :disabled="isProcessing">
+        <span v-if="isProcessing" class="spinner"></span>
+        {{ isProcessing ? 'Processing...' : 'Yes, Waitlist' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Confirmation Modal -->
+<div v-if="showRejectModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-icon warning">
+      <span class="material-icons">close</span>
+    </div>
+    
+    <h3 class="modal-title">{{ modalTitle }}</h3>
+    <div class="modal-message" v-html="modalMessage"></div>
+    <div class="application-summary">
+      <p><strong>Applicant:</strong> {{ application.first_name }} {{ application.last_name }}</p>
+      <p><strong>Email:</strong> {{ application.email_address }}</p>
+      <p><strong>Current Status:</strong> <span :class="`status-badge status-${getStatusClass(application.application_status)}`">
+        {{ application.application_status }}
+      </span></p>
+    </div>
+    <p class="warning-text">
+      <span class="material-icons" style="vertical-align: middle; margin-right: 5px;">warning</span>
+      Once rejected, the applicant will be notified and cannot reapply for this cycle.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-secondary" @click="cancelAction" :disabled="isProcessing">
+        Cancel
+      </button>
+      <button class="btn-error" @click="confirmAction" :disabled="isProcessing">
+        <span v-if="isProcessing" class="spinner"></span>
+        {{ isProcessing ? 'Processing...' : 'Yes, Reject' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div v-if="showSuccessModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-icon success">
+      <span class="material-icons">check_circle</span>
+    </div>
+    <h3 class="modal-title">Success!</h3>
+    <div class="modal-message">
+      <p>{{ successMessage }}</p>
+      <div class="application-details">
+        <p><strong>Applicant:</strong> {{ application.first_name }} {{ application.last_name }}</p>
+        <p><strong>New Status:</strong> <span :class="`status-badge status-${getStatusClass(actionType === 'approve' ? 'Accepted' : actionType === 'waitlist' ? 'Waitlist' : 'Rejected')}`">
+          {{ actionType === 'approve' ? 'Accepted' : actionType === 'waitlist' ? 'Waitlisted' : 'Rejected' }}
+        </span></p>
+        <p><strong>Updated:</strong> {{ new Date().toLocaleDateString() }}</p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" @click="closeSuccessModal">
+        Close
+      </button>
+      <button class="btn-primary" @click="goBack">
+        Back to Applications
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div v-if="showErrorModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-icon error">
+      <span class="material-icons">error_outline</span>
+    </div>
+    <h3 class="modal-title">Action Failed</h3>
+    <div class="modal-message">
+      <p>{{ errorMessage }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" @click="closeErrorModal">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
   </AdminIndex>
 </template>
 
 <script lang="ts" setup>
 import { Inertia } from '@inertiajs/inertia';
 import AdminIndex from '../AdminIndex.vue';
-import { onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+
+// Modal states
+const showApproveModal = ref(false);
+const showWaitlistModal = ref(false);
+const showRejectModal = ref(false);
+const showSuccessModal = ref(false);
+const showErrorModal = ref(false);
+const isProcessing = ref(false);
+const actionType = ref<'approve' | 'waitlist' | 'reject' | null>(null);
+const successMessage = ref('');
+const errorMessage = ref('');
 
 onMounted(() => {
   if (!document.querySelector('link[href*="material-icons"]')) {
@@ -331,6 +481,39 @@ onMounted(() => {
 })
 
 const { application } = defineProps<{ application: any }>();
+
+// Computed properties for modal content
+const modalTitle = computed(() => {
+  switch (actionType.value) {
+    case 'approve':
+      return 'Approve Application';
+    case 'waitlist':
+      return 'Waitlist Application';
+    case 'reject':
+      return 'Reject Application';
+    default:
+      return 'Confirm Action';
+  }
+});
+
+const modalMessage = computed(() => {
+  const name = `${application.first_name || ''} ${application.last_name || ''}`.trim();
+  
+  switch (actionType.value) {
+    case 'approve':
+      return `Are you sure you want to approve the application of <strong>${name}</strong>?`;
+    case 'waitlist':
+      return `Are you sure you want to waitlist the application of <strong>${name}</strong>?`;
+    case 'reject':
+      return `Are you sure you want to reject the application of <strong>${name}</strong>?`;
+    default:
+      return '';
+  }
+});
+
+// const applicantName = computed(() => {
+//   return `${application.first_name || ''} ${application.last_name || ''}`.trim();
+// });
 
 // Helper functions
 function getStatusClass(status: string): string {
@@ -363,116 +546,424 @@ function getFileName(filePath: string): string {
 }
 
 function downloadFile(filePath: string): void {
-  const encoded = encodeURIComponent(filePath); // Encode slashes for URL
+  const encoded = encodeURIComponent(filePath);
   window.open(`/admin/files/download/${encoded}`, '_blank');
 }
 
 function goBack(): void {
   Inertia.get('/admin/applications');
 }
+
+// ========== MODAL FUNCTIONS ==========
+
 function approveApplication(): void {
-  if (confirm('Are you sure you want to approve this application?')) {
-    Inertia.post(`/admin/applications/${application.id}/status`, {
-      application_status: 'Accepted'
-    });
-  }
+  actionType.value = 'approve';
+  showApproveModal.value = true;
 }
 
 function waitlistApplication(): void {
-  if (confirm('Are you sure you want to waitlist this application?')) {
-    Inertia.post(`/admin/applications/${application.id}/status`, {
-      application_status: 'Waitlist'
-    });
-  }
+  actionType.value = 'waitlist';
+  showWaitlistModal.value = true;
 }
 
 function rejectApplication(): void {
-  if (confirm('Are you sure you want to reject this application?')) {
-    Inertia.post(`/admin/applications/${application.id}/status`, {
-      application_status: 'Rejected'
-    });
+  actionType.value = 'reject';
+  showRejectModal.value = true;
+}
+
+function confirmAction(): void {
+  isProcessing.value = true;
+  
+  // Determine status based on action type
+  let status = '';
+  let actionText = '';
+  
+  switch (actionType.value) {
+    case 'approve':
+      status = 'Accepted';
+      actionText = 'approved';
+      showApproveModal.value = false;
+      break;
+    case 'waitlist':
+      status = 'Waitlist';
+      actionText = 'waitlisted';
+      showWaitlistModal.value = false;
+      break;
+    case 'reject':
+      status = 'Rejected';
+      actionText = 'rejected';
+      showRejectModal.value = false;
+      break;
+    default:
+      isProcessing.value = false;
+      return;
   }
+  
+  Inertia.post(`/admin/applications/${application.id}/status`, {
+    application_status: status
+  }, {
+    preserveScroll: true,
+    preserveState: true,
+    onSuccess: () => {
+      isProcessing.value = false;
+      successMessage.value = `Application ${actionText} successfully`;
+      showSuccessModal.value = true;
+    },
+    onError: (errors) => {
+      isProcessing.value = false;
+      errorMessage.value = errors?.message || `Failed to ${actionText} application. Please try again.`;
+      showErrorModal.value = true;
+    }
+  });
+}
+
+function closeSuccessModal(): void {
+  showSuccessModal.value = false;
+  successMessage.value = '';
+}
+
+function closeErrorModal(): void {
+  showErrorModal.value = false;
+  errorMessage.value = '';
+}
+
+function cancelAction(): void {
+  showApproveModal.value = false;
+  showWaitlistModal.value = false;
+  showRejectModal.value = false;
+  actionType.value = null;
 }
 </script>
 
 <style scoped>
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-icon {
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: var(--color-primary);
+}
+
+.modal-icon .material-icons {
+  font-size: var(--font-size-h3);
+  color: var(--color-primary);
+}
+
+.modal-title {
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+  text-align: center;
+  font-family: var(--font-alt);
+}
+
+.modal-message {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: var(--font-size-p);
+}
+
+.modal-message p {
+  margin-bottom: 1rem;
+}
+
+.application-summary {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.application-summary h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.application-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.application-summary li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.warning-text {
+  color: #d97706;
+  background: #fef3c7;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 4px solid #f59e0b;
+  text-align: left;
+  margin-top: 1rem;
+}
+
+.application-details {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.application-details p {
+  margin: 0.5rem 0;
+}
+
+.status-pending {
+  color: #f59e0b;
+  font-weight: 600;
+  background: #fef3c7;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.next-steps {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.next-steps h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.next-steps ol {
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.next-steps li {
+  margin-bottom: 0.5rem;
+  color: #4b5563;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  font-family: var(--font-alt);
+}
+
+.btn-error, .btn-waitlist, .btn-success, .btn-secondary {
+  padding: var(--space-3) var(--space-5);
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  min-width: 150px;
+  font-size: var(--font-size-p);
+}
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Spinner for loading state */
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive styles */
+@media (max-width: 640px) {
+  .modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    min-width: unset;
+  }
+  
+  .modal-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .modal-icon .material-icons {
+    font-size: 2rem;
+  }
+}
 .application-detail-container {
-  padding: var(--space-8);
+  padding: var(--space-4);
   background: var(--color-light-bg);
   min-height: 100vh;
   font-family: var(--font-alt);
+  box-sizing: border-box;
 }
+
 /* Main Container */
 .application-display-container {
   max-width: 1400px;
+  margin: 0 auto;
   background: var(--color-light-bg);
-  min-height: 100vh;
+  width: 100%;
 }
 
-/* Header Section */
-.display-header {
-  background: var(--color-background);
-  border-radius: var(--radius-l);
-  padding: var(--space-6);
-  margin-bottom: var(--space-6);
-  box-shadow: var(--elevation-3);
-  border-left: 4px solid var(--color-primary);
-}
-
-.header-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--space-4);
-  flex-wrap: wrap;
-  gap: var(--space-4);
-}
+/* Page Header */
 .page-header {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-4);
 }
+
 .page-title {
-    font-size: var(--font-size-h4);
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    margin-bottom: var(--space-2);
-    font-family: var(--font-sans);
+  font-size: var(--font-size-h6);
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-sans);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  line-height: 1.3;
 }
 
 .page-title .slash {
-  font-size: var(--font-size-h4);
+  font-size: var(--font-size-h6);
   font-weight: 400;
   color: var(--color-neutral);
-  margin: 0 var(--space-2);
 }
 
 .page-title .name {
   color: var(--color-foreground);
   text-transform: capitalize;
   font-weight: 600;
+  word-break: break-word;
+}
+
+/* Header Section */
+.display-header {
+  background: var(--color-background);
+  border-radius: var(--radius-l);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--elevation-2);
+  border-left: 4px solid var(--color-primary);
+}
+
+.header-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .application-meta {
   display: flex;
-  gap: var(--space-4);
   flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
 }
 
 .meta-badge {
   display: inline-flex;
   align-items: center;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-2);
   background: var(--color-light-bg);
   border-radius: var(--radius-m);
-  font-size: var(--font-size-p);
+  font-size: 1.4rem; 
   font-weight: 500;
   color: var(--color-primary);
+  white-space: nowrap;
 }
 
 .status-badge {
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-m);
-  font-size: var(--font-size-p);
+  font-size: 1.4rem; 
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -493,59 +984,46 @@ function rejectApplication(): void {
   color: var(--color-error);
 }
 
-
 .status-waitlist {
   background: var(--color-blue-green-15);
   color: var(--color-primary);
 }
 
-/* Content Grid */
+/* Content Grid - MOBILE FIRST (single column) */
 .display-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
-  margin-bottom: var(--space-6);
-}
-
-
-@media (max-width: 1024px) {
-  .display-content {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 /* Card Components */
 .info-card {
   background: var(--color-background);
   border-radius: var(--radius-l);
-  padding: var(--space-6);
-  box-shadow: var(--elevation-2);
-  height: fit-content;
+  padding: var(--space-4);
+  box-shadow: var(--elevation-1);
   border: 1px solid var(--color-light-bg-40);
   border-left: 4px solid var(--color-primary);
+  overflow: hidden;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-5);
-  padding-bottom: var(--space-3);
-  border-bottom: 2px solid var(--color-light-bg);
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-light-bg);
 }
 
-.material-icons{
+.card-header .material-icons {
   color: var(--color-primary);
-}
-
-.card-icon {
-  width: 24px;
-  height: 24px;
-  color: var(--color-primary);
+  font-size: 20px;
 }
 
 .card-title {
-  font-size: var(--font-size-h6);
+  font-size: var(--font-size-p);
   font-weight: 600;
   color: var(--color-primary);
   margin: 0;
@@ -555,47 +1033,35 @@ function rejectApplication(): void {
 /* Form Fields Display */
 .field-grid {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .field-row {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: var(--space-4);
-  align-items: start;
-}
-
-@media (max-width: 640px) {
-  .field-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-2);
-  }
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .field-label {
   font-weight: 600;
   color: var(--color-text-light);
-  font-size: var(--font-size-p);
+  font-size: 1.4rem; 
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 .field-value {
   color: var(--color-foreground);
-  font-size: var(--font-size-p);
-  line-height: 1.6;
-}
-
-.field-value.empty {
-  color: var(--color-neutral);
-  font-style: italic;
+  font-size: 1.4rem; 
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 .yes-no-badge {
   display: inline-block;
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-s);
-  font-size: var(--font-size-p);
+  font-size: 1.2rem; 
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -610,22 +1076,38 @@ function rejectApplication(): void {
   color: var(--color-secondary);
 }
 
+.conditional-field {
+  background: var(--color-light-bg);
+  padding: var(--space-2);
+  border-radius: var(--radius-m);
+  margin-top: var(--space-2);
+  border: 1px solid var(--color-light-bg-40);
+  font-size: 1.2rem; 
+}
+
 /* File Attachments */
+.full-width-card .file-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
 .file-attachments {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .file-item {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
   background: var(--color-light-bg);
   border-radius: var(--radius-m);
   border: 1px solid var(--color-neutral);
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .file-item:hover {
@@ -633,28 +1115,30 @@ function rejectApplication(): void {
   border-color: var(--color-primary);
 }
 
-.file-icon {
-  width: 20px;
-  height: 20px;
+.file-item .material-icons {
   color: var(--color-primary);
+  font-size: 18px;
 }
 
 .file-name {
   flex: 1;
-  font-size: var(--font-size-p);
+  font-size: 1.4rem; 
   font-weight: 500;
   color: var(--color-foreground);
+  word-break: break-all;
 }
 
 .file-download {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2);
   background: var(--color-primary);
-   color: var(--color-background);
+  color: var(--color-background);
   border: none;
   border-radius: var(--radius-s);
-  font-size: var(--font-size-p);
+  font-size: 1.4rem; 
   font-weight: 600;
   cursor: pointer;
+  width: 100%;
+  text-align: center;
   transition: background-color 0.2s ease;
 }
 
@@ -662,103 +1146,23 @@ function rejectApplication(): void {
   background: var(--color-primary-light);
 }
 
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: flex-end;
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--color-neutral);
-  flex-wrap: wrap;
-}
-
-.btn {
-  padding: var(--space-3) var(--space-5);
-  border: none;
-  border-radius: var(--radius-m);
-  font-size: var(--font-size-p);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-secondary {
-  background: var(--color-light-bg);
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-}
-.btn-secondary .material-icons {
-  color: var(--color-primary);
-}
-.btn-secondary:hover .material-icons {
-  color: var(--color-light-bg);
-}
-
-.btn-secondary:hover {
-  background: var(--color-primary);
-   color: var(--color-background);
-}
-.btn-success .material-icons{
-   color: var(--color-background);
-}
-.btn-success {
-  background: var(--color-primary);
-   color: var(--color-background);
-}
-.btn-success:hover .material-icons,
-.btn-success:hover {
-  background: var(--color-primary-light);
-  transform: translateY(-1px);
-}
-
-.btn-waitlist .material-icons{
-  color: var(--color-primary);
-}
-.btn-waitlist {
-  background: var(--color-blue-green-15);
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-}
-
-.btn-waitlist:hover .material-icons,
-.btn-waitlist:hover {
-  background: var(--color-primary);
-   color: var(--color-background);
-}
-
-.btn-error .material-icons,
-.btn-error {
-  background: var(--color-error);
-   color: var(--color-background);
-}
-
-.btn-error:hover .material-icons,
-.btn-error:hover {
-  background: #c0392b;
-}
-
-/* Essay/Long Text Section */
+/* Essay Section */
 .essay-section {
   background: var(--color-background);
   border-radius: var(--radius-l);
-  padding: var(--space-6);
-  box-shadow: var(--elevation-2);
-  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  box-shadow: var(--elevation-1);
+  margin-bottom: var(--space-4);
   border: 1px solid var(--color-light-bg-40);
   border-left: 4px solid var(--color-primary);
 }
 
 .essay-content {
-  line-height: 1.7;
+  line-height: 1.6;
   color: var(--color-foreground);
   white-space: pre-wrap;
-  font-size: var(--font-size-p);
+  font-size: 1.4rem; 
+  text-align: justify;
 }
 
 /* Full Width Card */
@@ -766,48 +1170,316 @@ function rejectApplication(): void {
   grid-column: 1 / -1;
 }
 
-/* Section with conditional fields */
-.conditional-field {
-  background: var(--color-light-bg);
-  padding: var(--space-4);
-  border-radius: var(--radius-m);
-  margin-top: var(--space-2);
-  border: 1px solid var(--color-light-bg-40);
+/* Action Buttons */
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-neutral);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .application-display-container {
-    padding: var(--space-4);
+.btn {
+  padding: var(--space-3);
+  border: none;
+  border-radius: var(--radius-m);
+  font-size: 1.4rem; 
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  min-height: 60px;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.btn .material-icons {
+  font-size: 18px;
+}
+
+.btn-secondary {
+  background: var(--color-light-bg);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-secondary .material-icons {
+  color: var(--color-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--color-primary);
+  color: var(--color-background);
+}
+
+.btn-secondary:hover .material-icons {
+  color: var(--color-background);
+}
+
+.btn-success {
+  background: var(--color-primary);
+  color: var(--color-background);
+}
+
+.btn-success:hover {
+  background: var(--color-primary-light);
+}
+
+.btn-waitlist {
+  background: var(--color-blue-green-15);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-waitlist:hover {
+  background: var(--color-primary);
+  color: var(--color-background);
+}
+
+.btn-waitlist:hover .material-icons {
+  color: var(--color-background);
+}
+
+.btn-error {
+  background: var(--color-error);
+  color: var(--color-background);
+}
+
+.btn-error:hover {
+  background: #c0392b;
+}
+
+/* TABLET BREAKPOINT (768px and up) */
+@media (min-width: 768px) {
+  .application-detail-container {
+    padding: var(--space-6);
   }
   
-  .display-header,
-  .info-card,
-  .essay-section {
-    padding: var(--space-4);
-  }
-  
-  .header-main {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .action-buttons {
-    justify-content: center;
-  }
-  
-  .btn {
-    flex: 1;
-    min-width: 140px;
-    justify-content: center;
+  .page-header {
+    margin-bottom: var(--space-6);
   }
   
   .page-title {
     font-size: var(--font-size-h5);
   }
   
+  .display-header {
+    padding: var(--space-5);
+    margin-bottom: var(--space-5);
+  }
+  
+  .display-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-5);
+    margin-bottom: var(--space-5);
+  }
+  
+  .info-card {
+    padding: var(--space-5);
+  }
+  
+  .card-header {
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 2px solid var(--color-light-bg);
+  }
+  
+  .card-header .material-icons {
+    font-size: 24px;
+  }
+  
   .card-title {
+    font-size: var(--font-size-h6);
+  }
+  
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--space-4);
+    align-items: start;
+  }
+  
+  .field-label {
     font-size: var(--font-size-p);
   }
+  
+  .field-value {
+    font-size: var(--font-size-p);
+  }
+  
+  .yes-no-badge {
+    font-size: var(--font-size-p);
+  }
+  
+  .conditional-field {
+    font-size: var(--font-size-p);
+  }
+  
+  .full-width-card .file-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+  }
+  
+  .file-item {
+    flex-direction: row;
+    align-items: center;
+    padding: var(--space-3);
+  }
+  
+  .file-item .material-icons {
+    font-size: 20px;
+  }
+  
+  .file-name {
+    font-size: var(--font-size-p);
+  }
+  
+  .file-download {
+    font-size: var(--font-size-p);
+    width: auto;
+    min-width: 100px;
+  }
+  
+  .essay-section {
+    padding: var(--space-5);
+    margin-bottom: var(--space-5);
+  }
+  
+  .essay-content {
+    font-size: var(--font-size-p);
+  }
+  
+  .action-buttons {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-3);
+    padding-top: var(--space-5);
+  }
+  
+  .btn {
+    flex-direction: row;
+    min-height: auto;
+    padding: var(--space-3) var(--space-4);
+    font-size: 1rem;
+  }
+  
+  .btn .material-icons {
+    font-size: 20px;
+  }
+}
+
+/* DESKTOP BREAKPOINT (1024px and up) */
+@media (min-width: 1024px) {
+  .application-detail-container {
+    padding: var(--space-8);
+  }
+  
+  .page-header {
+    margin-bottom: var(--space-8);
+  }
+  
+  .page-title {
+    font-size: var(--font-size-h4);
+  }
+  
+  .display-header {
+    padding: var(--space-6);
+    margin-bottom: var(--space-6);
+    box-shadow: var(--elevation-3);
+  }
+  
+  .display-content {
+    gap: var(--space-6);
+    margin-bottom: var(--space-6);
+  }
+  
+  .info-card {
+    padding: var(--space-6);
+    box-shadow: var(--elevation-2);
+  }
+  
+  .essay-section {
+    padding: var(--space-6);
+    margin-bottom: var(--space-6);
+    box-shadow: var(--elevation-2);
+  }
+  
+  .action-buttons {
+    padding-top: var(--space-6);
+  }
+  
+  .btn {
+    padding: var(--space-3) var(--space-5);
+  }
+}
+
+/* Large Desktop (1400px and up) */
+@media (min-width: 1400px) {
+  .display-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .full-width-card {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Extra Small Screens (less than 375px) */
+@media (max-width: 374px) {
+  .application-detail-container {
+    padding: var(--space-2);
+  }
+  
+  .page-title {
+    font-size: 1rem; /* ~16px */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+  
+  .page-title .slash {
+    display: none;
+  }
+  
+  .display-header,
+  .info-card,
+  .essay-section {
+    padding: var(--space-3);
+  }
+  
+  .field-value {
+    font-size: 1.4rem; 
+  }
+  
+  .action-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .btn {
+    min-height: 50px;
+  }
+}
+
+/* Prevent horizontal overflow */
+.display-content,
+.info-card,
+.essay-section,
+.file-item {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure text doesn't overflow */
+.field-value,
+.file-name,
+.essay-content {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 </style>

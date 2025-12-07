@@ -8,7 +8,7 @@
         >
             <div class="sidebar-header">
                 <div class="sidebar-title" v-if="!isSidebarCollapsed">
-                    SLSU CAM Admissions Portal
+                    SLSU CAM SuperAdmin
                 </div>
                 <button 
                     @click="toggleSidebar" 
@@ -21,46 +21,44 @@
                     </span>
                 </button>
             </div>
-            
+
+            <!-- SUPERADMIN NAVIGATION -->
             <ul class="sidebar-nav">
+                
+                <!-- Dashboard -->
                 <Link 
-                    href="/admin/dashboard" 
+                    href="/superadmin/dashboard" 
                     class="navbar-item"
-                    :class="{ 
-                        'active': $page.url === '/admin/dashboard',
-                        'collapsed': isSidebarCollapsed 
-                    }"
+                    :class="{ 'active': $page.url === '/superadmin/dashboard', 'collapsed': isSidebarCollapsed }"
                     :title="isSidebarCollapsed ? 'Dashboard' : ''"
                 >
                     <span class="material-icons nav-icon">dashboard</span>
                     <span class="nav-text" v-if="!isSidebarCollapsed">Dashboard</span>
                 </Link>
+
+                <!-- Add User -->
                 <Link 
-                    href="/admin/applications" 
+                    href="/superadmin/add-user" 
                     class="navbar-item"
-                    :class="{ 
-                        'active': $page.url.startsWith('/admin/applications'),
-                        'collapsed': isSidebarCollapsed 
-                    }"
-                    :title="isSidebarCollapsed ? 'Applications' : ''"
+                    :class="{ 'active': $page.url.startsWith('/superadmin/add-user'), 'collapsed': isSidebarCollapsed }"
+                    :title="isSidebarCollapsed ? 'Add New Admin' : ''"
                 >
-                    <span class="material-icons nav-icon">insert_drive_file</span>
-                    <span class="nav-text" v-if="!isSidebarCollapsed">Applications</span>
+                    <span class="material-icons nav-icon">person_add</span>
+                    <span class="nav-text" v-if="!isSidebarCollapsed">Add New Admin</span>
                 </Link>
+                <!-- Add User -->
                 <Link 
-                    href="/admin/application-periods" 
+                    href="/superadmin/edit-user" 
                     class="navbar-item"
-                    :class="{ 
-                        'active': $page.url.startsWith('/admin/application-periods'),
-                        'collapsed': isSidebarCollapsed 
-                    }"
-                    :title="isSidebarCollapsed ? 'Application Periods' : ''"
+                    :class="{ 'active': $page.url.startsWith('/superadmin/edit-user'), 'collapsed': isSidebarCollapsed }"
+                    :title="isSidebarCollapsed ? 'Admins' : ''"
                 >
-                    <span class="material-icons nav-icon">date_range</span>
-                    <span class="nav-text" v-if="!isSidebarCollapsed">Application Periods</span>
+                    <span class="material-icons nav-icon">edit_square</span>
+                    <span class="nav-text" v-if="!isSidebarCollapsed">Edit Admin Details</span>
                 </Link>
             </ul>
-            
+
+            <!-- Logout section -->
             <div 
                 class="logout-section"
                 :class="{ 'collapsed': isSidebarCollapsed }"
@@ -70,12 +68,18 @@
                 <div class="logout-text" v-if="!isSidebarCollapsed">Logout</div>
                 <span class="material-icons">logout</span>
             </div>
-            
-            <!-- Tooltip for collapsed state -->
-            <div v-if="isSidebarCollapsed" class="sidebar-tooltip" ref="tooltip">
-                <div class="tooltip-content"></div>
-            </div>
 
+            <!-- Tooltip -->
+            <div 
+                v-if="isSidebarCollapsed && tooltipText && tooltipPosition" 
+                class="sidebar-tooltip"
+                :style="{
+                    top: tooltipPosition.top + 'px',
+                    left: tooltipPosition.left + 'px'
+                }"
+            >
+                {{ tooltipText }}
+            </div>
             <!-- Logout Confirmation Modal -->
             <div v-if="showLogoutModal" class="modal-overlay">
                 <div class="modal-content">
@@ -86,7 +90,7 @@
                     <h3 class="modal-title">Confirm Logout</h3>
                     
                     <div class="modal-message">
-                        <p>Are you sure you want to logout from the admin dashboard?</p>
+                        <p>Are you sure you want to logout from the Super Admin dashboard?</p>
                     </div>
 
                     <div class="modal-actions">
@@ -102,14 +106,13 @@
             </div>
         </nav>
         
-        <!-- Overlay for mobile when sidebar is open -->
+        <!-- Mobile overlay -->
         <div 
             v-if="isMobile && !isSidebarCollapsed" 
             class="sidebar-overlay" 
             @click="closeSidebar"
         ></div>
-        
-        <!-- Main Content Area -->
+
         <main class="main-content" :class="{ 'collapsed': isSidebarCollapsed }">
             <slot />
         </main>
@@ -118,7 +121,7 @@
 
 <script lang="ts">
 export default {
-    name: 'AdminIndex'
+    name: 'SuperAdminIndex'
 }
 </script>
 
@@ -133,8 +136,8 @@ const isSidebarCollapsed = ref(false)
 const isMobile = ref(false)
 const tooltip = ref<HTMLElement | null>(null)
 let currentTooltipItem: HTMLElement | null = null
-
-// Add modal state
+const tooltipText = ref('')
+const tooltipPosition = ref<{top: number, left: number} | null>(null)
 const showLogoutModal = ref(false)
 const isLoggingOut = ref(false)
 
@@ -187,7 +190,6 @@ function checkIfMobile() {
     }
 }
 
-// Updated logout function
 function showLogoutConfirmation() {
     showLogoutModal.value = true
 }
@@ -195,14 +197,15 @@ function showLogoutConfirmation() {
 function logout() {
     isLoggingOut.value = true
     showLogoutModal.value = false
-    Inertia.post('/admin/logout')
+    Inertia.post(route('superadmin.logout'))
 }
 
 function cancelLogout() {
     showLogoutModal.value = false
 }
 
-// Tooltip functionality remains the same...
+
+// Tooltip functionality for collapsed state
 function setupTooltip() {
     const navItems = document.querySelectorAll('.navbar-item')
     
@@ -289,7 +292,7 @@ watch(isSidebarCollapsed, (newVal) => {
     justify-content: center;
     z-index: 9999;
     backdrop-filter: blur(4px);
-    font-size: var(--font-alt);
+    font-family: var(--font-alt);
 }
 
 .modal-content {
@@ -326,12 +329,12 @@ watch(isSidebarCollapsed, (newVal) => {
 }
 
 .modal-icon.warning {
-    color: var(--color-primary);
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
 .modal-icon .material-icons {
-   font-size: var(--font-size-h4);
-  color: var(--color-primary);
+    font-size: var(--font-size-h4);
+    color: white;
 }
 
 .modal-title {
@@ -352,29 +355,6 @@ watch(isSidebarCollapsed, (newVal) => {
 
 .modal-message p {
     margin-bottom: 1rem;
-}
-
-.logout-summary {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 1rem 0;
-    text-align: left;
-}
-
-.logout-summary p {
-    margin: 0.5rem 0;
-}
-
-.warning-text {
-    color: #d97706;
-    background: #fef3c7;
-    padding: 0.75rem;
-    border-radius: 6px;
-    border-left: 4px solid #f59e0b;
-    text-align: left;
-    margin-top: 1rem;
 }
 
 .modal-actions {

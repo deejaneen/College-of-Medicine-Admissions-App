@@ -97,7 +97,8 @@
                 </div>
                 
                 <div class="card-content">
-                    <table class="compact-table">
+                  <div class="horizontal-scroll">
+                      <table class="compact-table">
                         <thead>
                             <tr>
                                 <th>School Year</th>
@@ -152,6 +153,8 @@
                             </tr>
                         </tbody>
                     </table>
+                  </div>
+                   
                     
                     <!-- Pagination -->
                     <div v-if="schoolYears.links?.length > 3" class="pagination-section">
@@ -385,7 +388,6 @@ function formatDate(dateString: string) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-6);
-  max-width: 1600px;
   margin: 0 auto 24px;
 }
 
@@ -608,7 +610,12 @@ function formatDate(dateString: string) {
 .compact-table tr:hover td {
   border-color: var(--color-primary-light);
 }
-
+.horizontal-scroll{
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  white-space: nowrap;
+}
 .applicant-name {
   font-weight: 500;
   color: var(--color-foreground);

@@ -1,7 +1,18 @@
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, nextTick } from 'vue';
 import { watch, computed } from 'vue';  
 import { router } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
+
+onMounted(() => {
+  // Load Material Icons if not already loaded
+  if (!document.querySelector('link[href*="material-icons"]')) {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }
+});
 
 // ref declarations 
 const bachelorsTranscriptInput = ref<HTMLInputElement | null>(null);
@@ -12,7 +23,13 @@ const nmatCertificationInput = ref<HTMLInputElement | null>(null);
 const currentStep = ref(1);
 const totalSteps = 5;
 
-// Router for submission
+// Modal states
+const showConfirmModal = ref(false);
+const showSuccessModal = ref(false);
+const showErrorModal = ref(false);
+const isSubmitting = ref(false);
+const createdApplicantName = ref('');
+const errorMessage = ref('');
 
 // Props
 interface Props {
@@ -479,86 +496,51 @@ const prevStep = () => {
   if (currentStep.value > 1) currentStep.value--;
 };
 
-// Form submission
-// const submitForm = async () => {
-//   if (!validateStep(currentStep.value)) {
-//     return;
-//   }
-
-//   try {
-//     // Convert form data to FormData for file uploads
-//     const formData = new FormData();
-    
-//     // Add all form fields to FormData
-//     Object.keys(form).forEach(key => {
-//       const value = form[key as keyof ApplicationForm];
-      
-//       if (fileFields.includes(key as keyof ApplicationForm)) {
-//         // Handle file arrays
-//         const files = value as File[];
-//         files.forEach(file => {
-//           formData.append(`${key}[]`, file);
-//         });
-//       } else {
-//         // Handle regular fields
-//         formData.append(key, value as string);
-//       }
-//     });
-
-//     // Submit using Inertia
-//     router.post('/application/submit', formData, {
-//       forceFormData: true,
-//       onSuccess: () => {
-//         console.log('Application submitted successfully!');
-//         // You can add success notification or redirect here
-//       },
-//       onError: (errors) => {
-//         console.error('Submission errors:', errors);
-//         // Handle backend validation errors
-//         Object.keys(errors).forEach(key => {
-//           errors[key] = errors[key];
-//         });
-//       },
-//       onFinish: () => {
-//         console.log('Submission process completed');
-//       }
-//     });
-    
-//   } catch (error) {
-//     console.error('Error submitting form:', error);
-//   }
-// };
 const submitForm = async () => {
-  console.log('🚀 SUBMIT FORM CALLED - CHECKING VALIDATION');
-  
-  // Validate the current step
-  if (!validateStep(currentStep.value)) {
-    console.log('❌ Validation failed - cannot submit');
+  // Validate ALL steps, not just current step
+  let allValid = true;
+  for (let step = 1; step <= totalSteps; step++) {
+    if (!validateStep(step)) {
+      allValid = false;
+      
+      // Jump to the step with errors
+      if (step !== currentStep.value) {
+        currentStep.value = step;
+        await nextTick();
+      }
+      
+      scrollToFirstError();
+      break;
+    }
+  }
+
+  if (!allValid) {
     return;
   }
 
-  console.log('✅ Validation passed - preparing submission');
+  // Show confirmation modal instead of submitting directly
+  showConfirmModal.value = true;
+};
+
+const confirmSubmission = async () => {
+  showConfirmModal.value = false; 
+  isSubmitting.value = true;
 
   try {
-    // Create FormData
     const formData = new FormData();
     
-    // Add all text fields
     Object.keys(form).forEach(key => {
       const value = form[key as keyof ApplicationForm];
       
-      // Skip file fields for now
       if (fileFields.includes(key as keyof ApplicationForm)) {
         return;
       }
       
-      // Add text fields
       if (value !== null && value !== undefined && value !== '') {
         formData.append(key, value as string);
       }
     });
 
-    // Add file fields
     fileFields.forEach(field => {
       const files = form[field as keyof ApplicationForm] as File[];
       if (files && files.length > 0) {
@@ -567,31 +549,89 @@ const submitForm = async () => {
         });
       }
     });
-
-    console.log('📤 Submitting form data...');
     
-    // Submit using Inertia
     router.post('/application/submit', formData, {
       forceFormData: true,
+      preserveScroll: true,
+      preserveState: true,
       onSuccess: () => {
-        console.log('✅ Application submitted successfully!');
-        alert('Application submitted successfully!');
+        createdApplicantName.value = `${form.firstName} ${form.lastName}`;
+        showSuccessModal.value = true;
+        isSubmitting.value = false;
       },
-      onError: (errors) => {
-        console.error('❌ Submission errors:', errors);
-        // Show error messages to user
-        if (errors && typeof errors === 'object') {
-          Object.keys(errors).forEach(key => {
-            alert(`Error in ${key}: ${errors[key]}`);
-          });
+      onError: (backendErrors) => {
+        if (!backendErrors) {
+          errorMessage.value = 'Server error. Please try again.';
+          showErrorModal.value = true;
+          return;
         }
+        
+        if (backendErrors.emailAddress) {
+          const emailError = Array.isArray(backendErrors.emailAddress) 
+            ? backendErrors.emailAddress[0] 
+            : backendErrors.emailAddress;
+          
+          if (emailError.toLowerCase().includes('already') || 
+              emailError.toLowerCase().includes('taken') ||
+              emailError.toLowerCase().includes('duplicate') ||
+              emailError.toLowerCase().includes('exists')) {
+            
+            errorMessage.value = `The email "${form.emailAddress}" is already registered. Please use a different email address.`;
+          } else {
+            errorMessage.value = emailError;
+          }
+        } else if (backendErrors) {
+          const firstError = Object.values(backendErrors)[0];
+          errorMessage.value = Array.isArray(firstError) ? firstError[0] : firstError;
+        } else {
+          errorMessage.value = 'Failed to submit application. Please try again.';
+        }
+        
+        showErrorModal.value = true;
+        isSubmitting.value = false;
+      },
+      onFinish: () => {
+        isSubmitting.value = false;
       }
     });
 
-  } catch (error) {
-    console.error('❌ Unexpected error:', error);
-    alert('An unexpected error occurred. Please try again.');
+  } catch (e) {
+    errorMessage.value = 'An unexpected error occurred. Please try again.';
+    showErrorModal.value = true;
+    isSubmitting.value = false;
   }
+};
+
+const closeErrorModal = () => {
+  showErrorModal.value = false;
+  errorMessage.value = '';
+  
+  setTimeout(() => {
+    const emailInput = document.getElementById('emailAddress') as HTMLInputElement;
+    if (emailInput) {
+      emailInput.focus();
+    }
+  }, 100);
+};
+
+const scrollToFirstError = () => {
+  setTimeout(() => {
+    const firstErrorElement = document.querySelector('[style*="color: red"]:first-of-type');
+    if (firstErrorElement) {
+      firstErrorElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      const inputId = firstErrorElement.previousElementSibling?.id;
+      if (inputId) {
+        const inputElement = document.getElementById(inputId);
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }
+    }
+  }, 100);
 };
 </script>
 
@@ -1086,13 +1126,95 @@ const submitForm = async () => {
     <div class="button-container">
       <button class="navigation-button" type="button" @click="prevStep" :disabled="currentStep === 1">Previous</button>
       <button class="navigation-button" type="button" @click="nextStep" v-if="currentStep < totalSteps">Next</button>
-      <button class="button-submit" type="submit" v-else>
-        Submit
+      <button 
+        class="button-submit" 
+        type="button" 
+        @click="submitForm" 
+        v-else
+        :disabled="isSubmitting || !isApplicationOpen || hasSubmitted"
+      >
+        <span v-if="isSubmitting" class="spinner"></span>
+        <span v-else class="material-icons">send</span>
+        {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
       </button>
     </div>
     </div>
     
   </form>
+  <!-- CONFIRMATION MODAL (same pattern as SuperAdminAddUser) -->
+  <div v-if="showConfirmModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-icon warning">
+        <span class="material-icons">help_outline</span>
+      </div>
+
+      <h3 class="modal-title">Confirm Application Submission</h3>
+
+      <p class="modal-message">
+        Are you sure you want to submit your application for 
+        <strong>{{ form.firstName || 'this applicant' }} {{ form.lastName || '' }}</strong>?
+      </p>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" @click="showConfirmModal = false">
+          Cancel
+        </button>
+        <button class="btn-primary" @click="confirmSubmission">
+          Yes, Submit Application
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal (same pattern as SuperAdminAddUser) -->
+  <div v-if="showSuccessModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-icon success">
+        <span class="material-icons">check_circle</span>
+      </div>
+      <h3 class="modal-title">Application Submitted Successfully!</h3>
+      <p class="modal-message">
+        The application for <strong>{{ createdApplicantName }}</strong> has been submitted successfully.
+        You will receive a confirmation email shortly.
+      </p>
+      <div class="modal-actions">
+        <button 
+          class="btn-secondary"
+          @click="showSuccessModal = false"
+        >
+          Close
+        </button>
+
+        <Link 
+          :href="route('dashboard')" 
+          class="btn-primary"
+        >
+          Go to Dashboard
+        </Link>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Modal (same pattern as SuperAdminAddUser) -->
+  <div v-if="showErrorModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-icon error">
+        <span class="material-icons">error_outline</span>
+      </div>
+      <h3 class="modal-title">Failed to Submit Application</h3>
+      <p class="modal-message">
+        {{ errorMessage || 'There was an error submitting your application. Please try again.' }}
+      </p>
+      <div class="modal-actions">
+        <button 
+          class="btn-primary"
+          @click="closeErrorModal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 
@@ -1138,6 +1260,10 @@ button {
   border-radius: var(--radius-m);
   color: var(--color-foreground);
   font-size: var(--font-size-p);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: center;
 }
 .section-title{
   font-size: var(--font-size-h4);
@@ -1210,8 +1336,7 @@ button {
 .radio-button {
   width: 1.2rem;
   height: 1.2rem;
-  margin-right: 0.5rem;
-  vertical-align: middle;
+  margin: auto 0.5rem;
 }
 .radio-group-container{
   padding: var(--space-4) var(--space-4) 0 var(--space-4);
@@ -1245,6 +1370,250 @@ button {
 }
 .button-submit:hover{
   transform: translateY(-0.2rem);
+}
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.modal-icon .material-icons {
+  font-size: 2.5rem;
+  color: white;
+}
+
+.modal-title {
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+  text-align: center;
+  font-family: var(--font-alt);
+}
+
+.modal-message {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.modal-message p {
+  margin-bottom: 1rem;
+}
+
+.application-summary {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.application-summary h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.application-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.application-summary li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.warning-text {
+  color: #d97706;
+  background: #fef3c7;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 4px solid #f59e0b;
+  text-align: left;
+  margin-top: 1rem;
+}
+
+.application-details {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.application-details p {
+  margin: 0.5rem 0;
+}
+
+.status-pending {
+  color: #f59e0b;
+  font-weight: 600;
+  background: #fef3c7;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.next-steps {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.next-steps h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.next-steps ol {
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.next-steps li {
+  margin-bottom: 0.5rem;
+  color: #4b5563;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-primary, .btn-secondary {
+  padding: var(--space-3) var(--space-5);
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  min-width: 150px;
+  font-size: var(--font-size-h6);
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Spinner for loading state */
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive styles */
+@media (max-width: 640px) {
+  .modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    min-width: unset;
+  }
+  
+  .modal-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .modal-icon .material-icons {
+    font-size: 2rem;
+  }
 }
 /* === MINIMAL FILE UPLOAD STYLES - ADD THESE TO YOUR EXISTING STYLES === */
 

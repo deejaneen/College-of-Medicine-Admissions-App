@@ -1,70 +1,83 @@
 <template>
-  <!-- Template remains exactly the same -->
   <AdminIndex>
     <div class="dashboard-container">
-        <!-- YEAR FILTER SECTION -->
-        <div class="year-filter-section">
-            <label for="schoolYearFilter" class="filter-label">Filter by School Year:</label>
-            <select 
-                id="schoolYearFilter" 
-                v-model="selectedYear" 
-                @change="updateDashboardByYear"
-                class="year-filter-select"
-            >
-                <option value="all">All Years</option>
-                
-                <!-- First, show the active year if it exists -->
-                <option v-if="activeYear" :value="activeYear.id" :selected="selectedYear === activeYear.id.toString()">
-                {{ activeYear.school_year }} (Active Year)
-                </option>
-                
-                <!-- Then show all other years -->
-                <option 
-                v-for="year in nonActiveSchoolYears" 
-                :key="year.id" 
-                :value="year.id"
-                >
-                {{ year.school_year }}
-                </option>
-            </select>
-        </div>
-
-      
+          <div class="page-header">
+                <h1 class="page-title">Dashboard</h1>
+            </div>
+      <!-- YEAR FILTER SECTION -->
+      <div class="year-filter-section">
+        <label for="schoolYearFilter" class="filter-label">Filter by School Year:</label>
+        <select 
+          id="schoolYearFilter" 
+          v-model="selectedYear" 
+          @change="updateDashboardByYear"
+          class="year-filter-select"
+        >
+          <option value="all">All Years</option>
+          <!-- First, show the active year if it exists -->
+          <option v-if="activeYear" :value="activeYear.id" :selected="selectedYear === activeYear.id.toString()">
+            {{ activeYear.school_year }} (Active Year)
+          </option>
+          <!-- Then show all other years -->
+          <option 
+            v-for="year in nonActiveSchoolYears" 
+            :key="year.id" 
+            :value="year.id"
+          >
+            {{ year.school_year }}
+          </option>
+        </select>
+      </div>
 
       <!-- STATS CARDS -->
       <div class="stats-grid">
+        <!-- Total Applications Card -->
         <div class="stat-card stat-card-primary">
           <div class="stat-icon">
             <span class="material-icons">people</span>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ displayedStats.totalApplications }}</div>
-            <div class="stat-label">Total Applications</div>
-            <div class="stat-subtext">All school years</div>
-          </div>
-        </div>
-
-        <div class="stat-card stat-card-success">
-          <div class="stat-icon">
-             <span class="material-icons">check_circle</span>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ displayedStats.acceptedApplications }}</div>
-            <div class="stat-label">Accepted</div>
-            <div class="stat-change" v-if="displayedStats.acceptanceRate > 0">
-              {{ displayedStats.acceptanceRate }}% acceptance rate
+            <div class="stat-items">
+              <div class="stat-value">{{ displayedStats.totalApplications }}</div>
+            </div>
+            <div class="stat-items">
+              <div class="stat-label">Total Applications</div>
+              <div class="stat-change">All school years</div>
             </div>
           </div>
         </div>
 
-        <div class="stat-card stat-card-warning">
+        <!-- Accepted Card -->
+        <div class="stat-card stat-card-success">
           <div class="stat-icon">
-           <span class="material-icons">error</span>
+            <span class="material-icons">check_circle</span>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ displayedStats.pendingApplications }}</div>
-            <div class="stat-label">Pending Review</div>
-            <div class="stat-subtext">Need attention</div>
+            <div class="stat-items">
+              <div class="stat-value">{{ displayedStats.acceptedApplications }}</div>
+            </div>
+            <div class="stat-items">
+              <div class="stat-label">Accepted</div>
+              <div class="stat-change" v-if="displayedStats.acceptanceRate > 0">
+                {{ displayedStats.acceptanceRate }}% acceptance rate
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Review Card -->
+        <div class="stat-card stat-card-warning">
+          <div class="stat-icon">
+            <span class="material-icons">error</span>
+          </div>
+          <div class="stat-content">
+            <div class="stat-items">
+              <div class="stat-value">{{ displayedStats.pendingApplications }}</div>
+            </div>
+            <div class="stat-items">
+              <div class="stat-label">Pending Review</div>
+              <div class="stat-change">Need attention</div>
+            </div>
           </div>
         </div>
 
@@ -74,23 +87,32 @@
             <span class="material-icons">access_time</span>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ displayedStats.waitlistApplications }}</div>
-            <div class="stat-label">Waitlist</div>
-            <div class="stat-subtext">
-              {{ displayedStats.waitlistRate }}% waitlist rate
+            <div class="stat-items">
+              <div class="stat-value">{{ displayedStats.waitlistApplications }}</div>
+            </div>
+            <div class="stat-items">
+              <div class="stat-label">Waitlist</div>
+              <div class="stat-change" v-if="displayedStats.waitlistRate > 0">
+                {{ displayedStats.waitlistRate }}% waitlist rate
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- Rejected Card -->
         <div class="stat-card stat-card-danger">
           <div class="stat-icon">
             <span class="material-icons">cancel</span>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ displayedStats.rejectedApplications }}</div>
-            <div class="stat-label">Rejected</div>
-            <div class="stat-change" v-if="displayedStats.rejectionRate > 0">
-              {{ displayedStats.rejectionRate }}% rejection rate
+            <div class="stat-items">
+              <div class="stat-value">{{ displayedStats.rejectedApplications }}</div>
+            </div>
+            <div class="stat-items">
+              <div class="stat-label">Rejected</div>
+              <div class="stat-change" v-if="displayedStats.rejectionRate > 0">
+                {{ displayedStats.rejectionRate }}% rejection rate
+              </div>
             </div>
           </div>
         </div>
@@ -117,7 +139,8 @@
             </div>
           </div>
           <div class="card-content">
-            <div class="applications-list">
+           <div class="horizontal-scroll">
+             <div class="applications-list">
               <div 
                 v-for="app in filteredRecentApplications" 
                 :key="app.id" 
@@ -146,112 +169,113 @@
                 No applications found
               </div>
             </div>
+           </div>
           </div>
         </div>
 
         <!-- STATUS DISTRIBUTION -->
         <div class="content-card">
-        <div class="card-header">
+          <div class="card-header">
             <div class="card-title-group">
-            <h3 class="card-title">Application Status Distribution</h3>
-            <div class="card-subtitle">
+              <h3 class="card-title">Application Status Distribution</h3>
+              <div class="card-subtitle">
                 <select 
-                v-model="distributionYearFilter" 
-                @change="updateDistribution"
-                class="mini-select"
+                  v-model="distributionYearFilter" 
+                  @change="updateDistribution"
+                  class="mini-select"
                 >
-                <option value="all">All Years</option>
-                <option v-if="activeYear" :value="activeYear.id">
+                  <option value="all">All Years</option>
+                  <option v-if="activeYear" :value="activeYear.id">
                     {{ activeYear.school_year }} (Active Year)
-                </option>
-                <option 
+                  </option>
+                  <option 
                     v-for="year in distributionNonActiveSchoolYears" 
                     :key="year.id" 
                     :value="year.id"
-                >
+                  >
                     {{ year.school_year }}
-                </option>
+                  </option>
                 </select>
+              </div>
             </div>
-            </div>
-        </div>
-        <div class="card-content">
+          </div>
+          <div class="card-content">
             <div class="distribution-chart">
-            <div v-for="item in filteredDistribution" :key="item.status" class="distribution-item">
+              <div v-for="item in filteredDistribution" :key="item.status" class="distribution-item">
                 <div class="distribution-label">
-                <span class="status-dot" :class="`dot-${item.class}`"></span>
-                {{ item.label }}
+                  <span class="status-dot" :class="`dot-${item.class}`"></span>
+                  {{ item.label }}
                 </div>
                 <div class="distribution-bar">
-                <div class="bar-track">
+                  <div class="bar-track">
                     <div 
-                    :class="`bar-fill fill-${item.class}`" 
-                    :style="{ width: item.percentage + '%' }"
+                      :class="`bar-fill fill-${item.class}`" 
+                      :style="{ width: item.percentage + '%' }"
                     ></div>
+                  </div>
+                  <div class="distribution-value">{{ item.count }} ({{ item.percentage }}%)</div>
                 </div>
-                <div class="distribution-value">{{ item.count }} ({{ item.percentage }}%)</div>
-                </div>
-            </div>
+              </div>
             </div>
             
             <!-- SCHOOL YEAR SUMMARY -->
             <div class="year-summary">
-            <h4 v-if="distributionYearFilter === 'all'">All School Years</h4>
-            <h4 v-else-if="activeYear && parseInt(distributionYearFilter) === activeYear.id">Current Active Year</h4>
-            <h4 v-else>Selected School Year</h4>
-            
-            <div v-if="distributionYearFilter === 'all'" class="year-info">
+              <h4 v-if="distributionYearFilter === 'all'">All School Years</h4>
+              <h4 v-else-if="activeYear && parseInt(distributionYearFilter) === activeYear.id">Current Active Year</h4>
+              <h4 v-else>Selected School Year</h4>
+              
+              <div v-if="distributionYearFilter === 'all'" class="year-info">
                 <div class="year-name">All Years Combined</div>
                 <div class="year-stats">
-                <span>{{ distributionStats.totalApplications }} total applications</span>
-                <span class="stat-separator">•</span>
-                <span>{{ distributionStats.acceptedApplications }} accepted</span>
+                  <span>{{ distributionStats.totalApplications }} total applications</span>
+                  <span class="stat-separator">•</span>
+                  <span>{{ distributionStats.acceptedApplications }} accepted</span>
                 </div>
-            </div>
-            <div v-else-if="distributionSelectedYearObject" class="year-info">
+              </div>
+              <div v-else-if="distributionSelectedYearObject" class="year-info">
                 <div class="year-name">{{ distributionSelectedYearObject.school_year }}</div>
                 <div class="year-stats">
-                <span>{{ distributionStats.totalApplications }} applications</span>
-                <span class="stat-separator">•</span>
-                <span>{{ distributionStats.acceptedApplications }} accepted</span>
+                  <span>{{ distributionStats.totalApplications }} applications</span>
+                  <span class="stat-separator">•</span>
+                  <span>{{ distributionStats.acceptedApplications }} accepted</span>
                 </div>
-            </div>
-            <div v-else class="year-info">
+              </div>
+              <div v-else class="year-info">
                 <div class="no-active-year">No school year selected</div>
-            </div>
+              </div>
             </div>
             
             <!-- QUICK FILTER LINKS -->
             <div class="quick-filters">
-            <h4>Quick View</h4>
-            <div class="filter-links">
+              <h4>Quick View</h4>
+              <div class="filter-links">
                 <a 
-                :href="`/admin/applications?status=For+Review&year=${distributionYearFilter}`" 
-                class="filter-link filter-link-warning"
+                  :href="`/admin/applications?status=For+Review&year=${distributionYearFilter}`" 
+                  class="filter-link filter-link-warning"
                 >
-                Pending Review ({{ distributionStats.pendingApplications }})
+                  Pending Review ({{ distributionStats.pendingApplications }})
                 </a>
                 <a 
-                :href="`/admin/applications?status=Accepted&year=${distributionYearFilter}`" 
-                class="filter-link filter-link-success"
+                  :href="`/admin/applications?status=Accepted&year=${distributionYearFilter}`" 
+                  class="filter-link filter-link-success"
                 >
-                Accepted ({{ distributionStats.acceptedApplications }})
+                  Accepted ({{ distributionStats.acceptedApplications }})
                 </a>
                 <a 
-                :href="`/admin/applications?status=Rejected&year=${distributionYearFilter}`" 
-                class="filter-link filter-link-danger"
+                  :href="`/admin/applications?status=Rejected&year=${distributionYearFilter}`" 
+                  class="filter-link filter-link-danger"
                 >
-                Rejected ({{ distributionStats.rejectedApplications }})
+                  Rejected ({{ distributionStats.rejectedApplications }})
                 </a>
                 <a 
-                :href="`/admin/applications?status=Waitlist&year=${distributionYearFilter}`" 
-                class="filter-link filter-link-info"
+                  :href="`/admin/applications?status=Waitlist&year=${distributionYearFilter}`" 
+                  class="filter-link filter-link-info"
                 >
-                Waitlist ({{ distributionStats.waitlistApplications }})
+                  Waitlist ({{ distributionStats.waitlistApplications }})
                 </a>
+              </div>
             </div>
-            </div>
-        </div>
+          </div>
         </div>
 
         <!-- QUICK ACTIONS -->
@@ -263,7 +287,7 @@
             <div class="actions-grid">
               <a href="/admin/applications" class="action-item">
                 <div class="action-icon">
-                    <span class="material-icons">grading</span>
+                  <span class="material-icons">grading</span>
                 </div>
                 <div class="action-content">
                   <div class="action-title">Review Applications</div>
@@ -280,26 +304,6 @@
                   <div class="action-description">Set active year</div>
                 </div>
               </a>
-
-              <a href="/admin/applications?status=accepted" class="action-item">
-                <div class="action-icon">
-                 <span class="material-icons">visibility</span>
-                </div>
-                <div class="action-content">
-                  <div class="action-title">View Accepted</div>
-                  <div class="action-description">{{ stats.acceptedApplications }} total accepted</div>
-                </div>
-              </a>
-
-              <a href="/admin/reports" class="action-item">
-                <div class="action-icon">
-                <span class="material-icons">print</span>
-                </div>
-                <div class="action-content">
-                  <div class="action-title">Generate Reports</div>
-                  <div class="action-description">Export application data</div>
-                </div>
-              </a>
             </div>
           </div>
         </div>
@@ -307,6 +311,7 @@
     </div>
   </AdminIndex>
 </template>
+
 <script lang="ts" setup>
 import { Inertia } from '@inertiajs/inertia';
 import { computed, ref } from 'vue';
@@ -322,44 +327,44 @@ onMounted(() => {
   }
 })
 
-// Define interfaces based on your existing application structure
+// Define interfaces
 interface Application {
-    id: number;
-    first_name?: string;
-    middle_name?: string;
-    last_name?: string;
-    email_address?: string;
-    application_status?: string;
-    created_at?: string;
-    school_year?: {
-        id: number;
-        school_year: string;
-        is_active: boolean;
-    };
-}
-
-interface SchoolYear {
+  id: number;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  email_address?: string;
+  application_status?: string;
+  created_at?: string;
+  school_year?: {
     id: number;
     school_year: string;
     is_active: boolean;
+  };
+}
+
+interface SchoolYear {
+  id: number;
+  school_year: string;
+  is_active: boolean;
 }
 
 interface PaginatedApplications {
-    data: Application[];
-    links: Array<{
-        url: string | null;
-        label: string;
-        active: boolean;
-    }>;
-    meta: {
-        current_page: number;
-        from: number;
-        to: number;
-        total: number;
-        last_page: number;
-        per_page: number;
-        path: string;
-    };
+  data: Application[];
+  links: Array<{
+    url: string | null;
+    label: string;
+    active: boolean;
+  }>;
+  meta: {
+    current_page: number;
+    from: number;
+    to: number;
+    total: number;
+    last_page: number;
+    per_page: number;
+    path: string;
+  };
 }
 
 interface Props {
@@ -372,16 +377,12 @@ interface Props {
     rejectedApplications: number;
     pendingApplications: number;
     waitlistApplications: number;
-    activeYearApplications: number;
-    activeYearAccepted: number;
-    activeYearPending: number;
-    activeYearRejected: number;
     recentApplications: Application[];
     acceptanceRate: number;
     waitlistRate: number;
     rejectionRate: number;
     pendingRate: number;
-    distributionStats?: { // ADD THIS
+    distributionStats?: {
       totalApplications: number;
       acceptedApplications: number;
       rejectedApplications: number;
@@ -389,8 +390,8 @@ interface Props {
       waitlistApplications: number;
     };
   };
-  allSchoolYears: SchoolYear[]; 
-  // ADD THESE FILTER PROPS FROM SERVER
+  allSchoolYears: SchoolYear[];
+  // ADD FILTERS PROP (like ApplicationPeriods)
   filters?: {
     selected_year?: string;
     distribution_year?: string;
@@ -400,15 +401,14 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// REMOVE ALL CLIENT-SIDE COMPUTED PROPERTIES AND FILTERING
-// Initialize filters from server props
+// Initialize filter values from server (like ApplicationPeriods)
 const selectedYear = ref<string>(props.filters?.selected_year || props.activeYear?.id?.toString() || 'all');
 const distributionYearFilter = ref<string>(props.filters?.distribution_year || props.activeYear?.id?.toString() || 'all');
 const recentFilter = ref<string>(props.filters?.recent_filter || 'all');
 
-// ========== SIMPLIFIED COMPUTED PROPERTIES ==========
+// ========== COMPUTED PROPERTIES ==========
+// Simple computed properties that just format server data (like ApplicationPeriods)
 
-// Use server-provided stats directly
 const displayedStats = computed(() => {
   return {
     totalApplications: props.stats.totalApplications,
@@ -422,88 +422,22 @@ const displayedStats = computed(() => {
   };
 });
 
-// Use server-provided recent applications directly
 const filteredRecentApplications = computed((): Application[] => {
   return props.stats.recentApplications || [];
 });
 
-// Use server-provided distribution stats
 const distributionStats = computed(() => {
-  // If server provides specific distribution stats, use them
-  if (props.stats.distributionStats) {
-    return props.stats.distributionStats;
-  }
-  
-  // Otherwise use the main stats (for "All Years")
-  return {
+  // Use distributionStats if provided, otherwise use main stats
+  return props.stats.distributionStats || {
     totalApplications: props.stats.totalApplications,
     acceptedApplications: props.stats.acceptedApplications,
     rejectedApplications: props.stats.rejectedApplications,
     pendingApplications: props.stats.pendingApplications,
-    waitlistApplications: props.stats.waitlistApplications
+    waitlistApplications: props.stats.waitlistApplications,
   };
 });
 
-interface DistributionItem {
-  status: string;
-  label: string;
-  count: number;
-  percentage: number;
-  class: string;
-}
-
-// Simple distribution chart based on server stats
-const filteredDistribution = computed((): DistributionItem[] => {
-  const stats = distributionStats.value;
-  const total = stats.totalApplications;
-  
-  if (total === 0) return [];
-  
-  return [
-    { 
-      status: 'accepted', 
-      label: 'Accepted', 
-      count: stats.acceptedApplications, 
-      percentage: Math.round((stats.acceptedApplications / total) * 100),
-      class: 'accepted'
-    },
-    { 
-      status: 'pending', 
-      label: 'Pending Review', 
-      count: stats.pendingApplications, 
-      percentage: Math.round((stats.pendingApplications / total) * 100),
-      class: 'pending'
-    },
-    { 
-      status: 'waitlist', 
-      label: 'Waitlist', 
-      count: stats.waitlistApplications, 
-      percentage: Math.round((stats.waitlistApplications / total) * 100),
-      class: 'waitlist'
-    },
-    { 
-      status: 'rejected', 
-      label: 'Rejected', 
-      count: stats.rejectedApplications, 
-      percentage: Math.round((stats.rejectedApplications / total) * 100),
-      class: 'rejected'
-    }
-  ].filter(item => item.count > 0);
-});
-
-// Get selected year object for distribution (still works)
-const distributionSelectedYearObject = computed(() => {
-  if (distributionYearFilter.value === 'all') return null;
-  const yearId = parseInt(distributionYearFilter.value);
-  
-  if (props.activeYear && props.activeYear.id === yearId) {
-    return props.activeYear;
-  }
-  
-  return props.allSchoolYears?.find(y => y.id === yearId) || null;
-});
-
-// Get non-active school years for dropdowns (still works)
+// School years for dropdowns
 const nonActiveSchoolYears = computed((): SchoolYear[] => {
   if (!props.allSchoolYears || !Array.isArray(props.allSchoolYears)) {
     return [];
@@ -523,34 +457,99 @@ const distributionNonActiveSchoolYears = computed((): SchoolYear[] => {
   return nonActiveSchoolYears.value;
 });
 
+// For distribution chart - USE SERVER DATA DIRECTLY
+interface DistributionItem {
+  status: string;
+  label: string;
+  count: number;
+  percentage: number;
+  class: string;
+}
+
+const filteredDistribution = computed((): DistributionItem[] => {
+  const stats = distributionStats.value;
+  const total = stats.totalApplications;
+  
+  if (total === 0) return [];
+  
+  // Calculate percentages from server counts (or server should provide these)
+  const acceptedPercentage = Math.round((stats.acceptedApplications / total) * 100);
+  const pendingPercentage = Math.round((stats.pendingApplications / total) * 100);
+  const waitlistPercentage = Math.round((stats.waitlistApplications / total) * 100);
+  const rejectedPercentage = Math.round((stats.rejectedApplications / total) * 100);
+  
+  return [
+    { 
+      status: 'accepted', 
+      label: 'Accepted', 
+      count: stats.acceptedApplications, 
+      percentage: acceptedPercentage,
+      class: 'accepted'
+    },
+    { 
+      status: 'pending', 
+      label: 'Pending Review', 
+      count: stats.pendingApplications, 
+      percentage: pendingPercentage,
+      class: 'pending'
+    },
+    { 
+      status: 'waitlist', 
+      label: 'Waitlist', 
+      count: stats.waitlistApplications, 
+      percentage: waitlistPercentage,
+      class: 'waitlist'
+    },
+    { 
+      status: 'rejected', 
+      label: 'Rejected', 
+      count: stats.rejectedApplications, 
+      percentage: rejectedPercentage,
+      class: 'rejected'
+    }
+  ].filter(item => item.count > 0);
+});
+
+const distributionSelectedYearObject = computed(() => {
+  if (distributionYearFilter.value === 'all') return null;
+  const yearId = parseInt(distributionYearFilter.value);
+  
+  if (props.activeYear && props.activeYear.id === yearId) {
+    return props.activeYear;
+  }
+  
+  return props.allSchoolYears?.find(y => y.id === yearId) || null;
+});
+
 // ========== METHODS ==========
+// Use Inertia.get with filters (like ApplicationPeriods)
 
 function updateDashboardByYear(): void {
-  console.log('Top filter - Selected year changed to:', selectedYear.value);
-  
-  // Send request to server with filter
-  Inertia.reload({
+  // Just like ApplicationPeriods - make a request to server with filters
+  Inertia.visit(window.location.pathname, {
     data: {
       selected_year: selectedYear.value,
+      distribution_year: distributionYearFilter.value,
+      recent_filter: recentFilter.value,
     },
     preserveScroll: true,
-    preserveState: true
+    preserveState: true,
+    replace: true, 
+    only: ['stats', 'filters'], 
   });
 }
 
 function updateDistribution(): void {
-  console.log('Distribution filter - Selected year changed to:', distributionYearFilter.value);
-  
-  // Send request to server for distribution data
-  Inertia.reload({
-    data: {
-      distribution_year: distributionYearFilter.value,
-    },
-    preserveScroll: true,
-    preserveState: true
-  });
+  // Update all filters and reload
+  updateDashboardByYear();
 }
 
+function filterRecentApplications(): void {
+  // Update all filters and reload
+  updateDashboardByYear();
+}
+
+// Other methods remain the same
 function goToApplication(id: number): void {
   Inertia.get(`/admin/applications/${id}`);
 }
@@ -569,21 +568,8 @@ function formatDate(dateString?: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
-
-function filterRecentApplications(): void {
-  console.log('Filtering recent applications:', recentFilter.value);
-  
-  // Send request to server for filtered recent applications
-  Inertia.reload({
-    data: {
-      recent_filter: recentFilter.value,
-      selected_year: selectedYear.value,
-    },
-    preserveScroll: true,
-    preserveState: true
-  });
-}
 </script>
+
 
 <style scoped>
 .dashboard-container {
@@ -591,6 +577,18 @@ function filterRecentApplications(): void {
   background: var(--color-light-bg);
   min-height: 100vh;
   font-family: var(--font-alt);
+}
+.page-header {
+  margin-bottom: var(--space-8);
+}
+
+.page-title {
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  margin: 0;
+  font-family: var(--font-sans);
 }
 
 /* Year Filter Section */
@@ -776,13 +774,14 @@ function filterRecentApplications(): void {
 
 .stat-content {
   flex: 1;
+  display: flex;
+  gap: var(--space-4);
 }
 
 .stat-value {
-  font-size: 2.4rem;
+  font-size: var(--font-size-h4);
   font-weight: 700;
   line-height: 1;
-  margin-bottom: var(--space-1);
   color: var(--color-foreground);
   font-family: var(--font-alt);
 }
@@ -796,19 +795,10 @@ function filterRecentApplications(): void {
   letter-spacing: 0.5px;
   font-family: var(--font-sans);
 }
-
+.stat-change,
 .stat-subtext {
-  font-size: var(--font-size-p);
   color: var(--color-neutral-dark);
   font-family: var(--font-alt);
-}
-
-.stat-change {
-  font-size: var(--font-size-p);
-  font-weight: 600;
-  margin-top: var(--space-1);
-  text-transform: uppercase;
-  font-family: var(--font-sans);
 }
 
 .stat-card-success .stat-change {
@@ -913,6 +903,17 @@ function filterRecentApplications(): void {
 }
 
 /* Applications List */
+.horizontal-scroll{
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  padding-bottom: 8px;
+   display: flex;
+  gap: var(--space-5)
+}
+.horizontal-scroll .applications-list {
+  width: 100%;
+}
 .applications-list {
   display: flex;
   flex-direction: column;
@@ -943,7 +944,7 @@ function filterRecentApplications(): void {
 
 .applicant-name {
   font-weight: 500;
-  font-size: var(--font-size-p);
+  font-size: 1.4rem;
   color: var(--color-foreground);
   margin-bottom: var(--space-1);
   display: flex;
@@ -953,11 +954,10 @@ function filterRecentApplications(): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
 }
 
 .year-badge {
-  font-size: var(--font-size-p);
+  font-size: 1.4rem;
   padding: 2px 8px;
   background: var(--color-light-bg);
   color: var(--color-neutral-dark);
@@ -968,13 +968,12 @@ function filterRecentApplications(): void {
 }
 
 .applicant-email {
-  font-size: var(--font-size-p);
+  font-size: 1.4rem;
   color: var(--color-neutral-dark);
   font-family: var(--font-alt);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
 }
 
 .application-meta {
@@ -1288,7 +1287,12 @@ function filterRecentApplications(): void {
   color: var(--color-neutral-dark);
   font-family: var(--font-alt);
 }
-
+ .stat-items {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    
+  }
 /* Material Icons */
 .material-icons {
   color: var(--color-primary);
@@ -1310,7 +1314,7 @@ function filterRecentApplications(): void {
 /* Responsive Design - matching AdminApplications breakpoints */
 @media (max-width: 1200px) {
   .content-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1330,7 +1334,15 @@ function filterRecentApplications(): void {
     width: 100%;
     min-width: 0;
   }
-  
+ 
+
+  .stat-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 1rem;
+
+  }
   .stats-grid {
     grid-template-columns: 1fr;
     gap: var(--space-4);
@@ -1360,10 +1372,6 @@ function filterRecentApplications(): void {
     font-size: var(--font-size-p);
   }
   
-  .applicant-name,
-  .applicant-email {
-    max-width: 120px;
-  }
   
   .card-actions {
     width: 100%;

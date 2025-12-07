@@ -5,21 +5,11 @@
                 <div class="navbar-container">
                     <ul class="navbar__nav">
                         <li class="navbar__logo">
-                            <Link href="/">
+                            <a href="/">
                                 <img src="../../../storage/app/public/images/CAMLogo.png" 
                                     alt="CAM Logo" 
                                     class="logo-image">
-                            </Link>
-                        </li>
-                        <li class="navbar__item-qualifications">
-                            <Link href="#qualifications">
-                                <span class="underline-animation">QUALIFICATIONS</span>
-                            </Link>
-                        </li>
-                        <li class="navbar__item-required-documents">
-                            <Link href="#requiredDocuments">
-                                <span class="underline-animation">REQUIRED DOCUMENTS</span>
-                            </Link>
+                            </a>
                         </li>
                     </ul>
                     <ul class="navbar__auth">

@@ -6,6 +6,7 @@ use App\Models\Application;
 use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ActionLogger;
 use Illuminate\Validation\Rule;
 
 class ApplicationController extends Controller
@@ -228,10 +229,14 @@ class ApplicationController extends Controller
 
         try {
             $application = Application::create($applicationData);
-            
-            return redirect()
-                ->route('dashboard')
-                ->with('success', 'Application submitted successfully for ' . $activeSchoolYear->school_year . ' school year.');
+
+            // ActionLogger::log(
+            //     'create',
+            //     'applications',
+            //     "Applicant {$user->name} ({$user->email}) submitted an application for school year {$activeSchoolYear->school_year}."
+            // );
+
+            return back()->with('success', 'Application submitted successfully for ' . $activeSchoolYear->school_year . ' school year.');
                 
         } catch (\Exception $e) {
             // This will catch any database errors including unique constraint violations
