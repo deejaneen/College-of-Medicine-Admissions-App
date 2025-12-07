@@ -15,7 +15,6 @@ class ActionLog extends Model
         'table_name',
         'performed_by',
         'user_type',     
-        'user_model',   
         'user_role',
         'details',
         'performed_at',

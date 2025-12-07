@@ -12,8 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('action_logs', function (Blueprint $table) {
+            // Add after existing column
             $table->string('user_type')->nullable()->after('performed_by');
-            $table->string('user_role')->nullable()->after('user_model');
+
+            // user_model does NOT exist, so remove ->after()
+            $table->string('user_role')->nullable();
         });
     }
 
@@ -22,6 +25,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('action_logs', function (Blueprint $table) {
+            $table->dropColumn(['user_type', 'user_role']);
+        });
     }
 };
